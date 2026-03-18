@@ -35,7 +35,17 @@ jobs:
         run: sf project deploy start --target-org staging-org --source-dir force-app --wait 10
         
       - name: Assign Permission Set
-        run: sf org assign permset -n Apex_Recipes --target-org staging-org
+        run: |
+          output=$(sf org assign permset -n Apex_Recipes --target-org staging-org 2>&1) && {
+            echo "$output"
+            exit 0
+          }
+          echo "$output"
+          if echo "$output" | grep -q "Duplicate PermissionSetAssignment"; then
+            echo "Permission set already assigned; continuing."
+            exit 0
+          fi
+          exit 1
 
       - name: Trigger Jataka Kamikaze Pods
         run: |
