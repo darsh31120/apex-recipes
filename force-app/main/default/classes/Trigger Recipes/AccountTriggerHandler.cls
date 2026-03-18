@@ -134,7 +134,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
     public override void afterUpdate() {
         Set<Id> acctIds = new Map<Id, SObject>(this.triggerNew).keySet();
         Map<Id, Account> persistedAccounts = new Map<Id, Account>([
-            SELECT Id, Name, ShippingState
+            SELECT Id, Name, ShippingState, LastModifiedDate
             FROM Account
             WHERE Id IN :acctIds
         ]);
@@ -145,6 +145,9 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             String subject = 'Account was updated, please verify';
             if (persisted?.ShippingState != acct.ShippingState) {
                 subject += ' - State changed';
+            }
+            if (acct.LastModifiedDate != persisted?.LastModifiedDate) {
+                subject += ' - Timestamp diff';
             }
             Task tsk = new Task(
                 WhatId = acct.Id,
