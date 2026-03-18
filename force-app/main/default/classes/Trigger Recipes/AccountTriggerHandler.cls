@@ -132,11 +132,23 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      */
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterUpdate() {
+        Set<Id> acctIds = new Map<Id, SObject>(this.triggerNew).keySet();
+        Map<Id, Account> persistedAccounts = new Map<Id, Account>([
+            SELECT Id, Name, ShippingState
+            FROM Account
+            WHERE Id IN :acctIds
+        ]);
+
         List<Task> newTasks = new List<Task>();
         for (Account acct : this.triggerNew) {
+            Account persisted = persistedAccounts.get(acct.Id);
+            String subject = 'Account was updated, please verify';
+            if (persisted?.ShippingState != acct.ShippingState) {
+                subject += ' - State changed';
+            }
             Task tsk = new Task(
                 WhatId = acct.Id,
-                Subject = 'Account was updated, please verify'
+                Subject = subject
             );
             newTasks.add(tsk);
         }
