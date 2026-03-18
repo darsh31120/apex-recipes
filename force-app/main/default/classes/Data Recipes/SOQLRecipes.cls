@@ -126,7 +126,7 @@ public with sharing class SOQLRecipes {
             FROM Account
             WITH USER_MODE
             ORDER BY Industry DESC
-            LIMIT 10
+            LIMIT 20
         ];
     }
 
