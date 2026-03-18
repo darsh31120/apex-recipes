@@ -1,6 +1,13 @@
 /**
  * @description Demonstrates how to construct a TriggerHandler using the
  * trigger handler framework found in Shared Code/TriggerHandler.cls
+ * 
+ * PMD CRUD Violation Notice:
+ * This class contains methods with @SuppressWarnings('PMD.ApexCRUDViolation') annotations.
+ * Trigger code runs in system mode regardless of user permissions, so CRUD checking
+ * for Account and Task objects is not necessary in trigger context. This code is
+ * only safe to execute within trigger context.
+ * 
  * @group Trigger Recipes
  * @see TriggerHandler
  * @see AccountServiceLayer
@@ -18,6 +25,29 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * @description Custom exception class
      */
     public class AccountTriggerHandlerException extends Exception {
+    }
+
+    /**
+     * @description Handles DML operations with consistent error handling and circuit breaker support
+     * @param records The records to insert
+     * @param operationContext Context description for error messages
+     * @throws AccountTriggerHandlerException when DML operation fails
+     */
+    private void performDmlInsert(List<SObject> records, String operationContext) {
+        try {
+            if (Test.isRunningTest() && AccountTriggerHandler.circuitBreaker != null) {
+                throw AccountTriggerHandler.circuitBreaker;
+            }
+            insert records;
+        } catch (DmlException dmle) {
+            System.debug(
+                LoggingLevel.INFO,
+                operationContext + ' failed with DML exception. Details: ' + dmle.getMessage()
+            );
+            throw new AccountTriggerHandlerException(
+                operationContext + ': ' + dmle.getMessage()
+            );
+        }
     }
 
     /**
@@ -141,22 +171,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             newTasks.add(tsk);
         }
 
-        try {
-            if (
-                Test.isRunningTest() &&
-                AccountTriggerHandler.circuitBreaker != null
-            ) {
-                throw AccountTriggerHandler.circuitBreaker;
-            }
-            insert newTasks;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting Tasks for newly updated accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
-            );
-            throw new AccountTriggerHandlerException('Failed to insert tasks');
-        }
+        performDmlInsert(newTasks, 'Inserting Tasks for updated accounts');
     }
 
     // Delete Contexts
@@ -188,12 +203,12 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         }
 
         try {
-            insert clonedAccounts;
-        } catch (DmlException dmle) {
+            performDmlInsert(clonedAccounts, 'Inserting cloned accounts');
+        } catch (AccountTriggerHandlerException atbe) {
+            // Swallow exception for before delete context to prevent delete operation failure
             System.debug(
                 LoggingLevel.INFO,
-                'Inserting cloned accounts failed with DML exception. Details: ' +
-                dmle.getMessage()
+                'Cloned account insertion failed during before delete: ' + atbe.getMessage()
             );
         }
     }
@@ -225,18 +240,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             newTasks.add(tsk);
         }
 
-        try {
-            insert newTasks;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting Tasks for deleted accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
-            );
-            throw new AccountTriggerHandlerException(
-                'Failed to insert Tasks: ' + dmle.getMessage()
-            );
-        }
+        performDmlInsert(newTasks, 'Inserting Tasks for deleted accounts');
     }
 
     // Undelete Contexts
@@ -273,12 +277,12 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         }
 
         try {
-            insert newTasks;
-        } catch (DmlException dmle) {
+            performDmlInsert(newTasks, 'Inserting Tasks for restored accounts');
+        } catch (AccountTriggerHandlerException atbe) {
+            // Swallow exception for after undelete context to prevent undelete operation failure
             System.debug(
                 LoggingLevel.INFO,
-                'Inserting Tasks for restored accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
+                'Task insertion failed during after undelete: ' + atbe.getMessage()
             );
         }
     }
