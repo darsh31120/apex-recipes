@@ -35,7 +35,7 @@ jobs:
         run: sf project deploy start --target-org staging-org --source-dir force-app --wait 10
         
       - name: Assign Permission Set
-        run: sf org assign permset -n Your_Perm_Set_Name --target-org staging-org
+        run: sf org assign permset -n Apex_Recipes --target-org staging-org
 
       - name: Trigger Jataka Kamikaze Pods
         run: |
