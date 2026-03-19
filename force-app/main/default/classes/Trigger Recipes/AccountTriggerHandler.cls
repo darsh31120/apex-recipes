@@ -42,6 +42,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         }
     }
     // ==========================================
+    //....
     public override void beforeUpdate() {
         for (Account acct : this.triggerNew) {
             if (acct.ShippingState?.length() > 2) {
