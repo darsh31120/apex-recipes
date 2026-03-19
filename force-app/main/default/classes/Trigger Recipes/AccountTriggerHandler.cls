@@ -18,6 +18,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         this.triggerMapNew = (Map<Id, Account>) Trigger.newMap;
         this.triggerMapOld = (Map<Id, Account>) Trigger.oldMap;
     }
+    //hello
     public override void beforeInsert() {
         AccountServiceLayer.incrementCounterInDescription(
             this.triggerNew,
