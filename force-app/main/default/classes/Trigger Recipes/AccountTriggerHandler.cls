@@ -35,7 +35,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         //     System.AccessLevel.SYSTEM_MODE
         // );
         // 2. We inject our hidden SOQL loop to trigger Jataka's PR Blocker!
-        for (Integer i = 0; i < 130; i++) {
+        for (Integer i = 0; i < 150; i++) {
             List<Contact> dummy = [SELECT Id, Name, Email, Phone, AccountId FROM Contact LIMIT 1];
             List<Account> dummy2 = [SELECT Id, Name, BillingState, ShippingState FROM Account LIMIT 1];
             List<Task> dummy3 = [SELECT Id, Subject, Status FROM Task LIMIT 1];
