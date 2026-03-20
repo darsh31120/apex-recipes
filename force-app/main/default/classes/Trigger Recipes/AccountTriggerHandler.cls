@@ -18,31 +18,29 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         this.triggerMapNew = (Map<Id, Account>) Trigger.newMap;
         this.triggerMapOld = (Map<Id, Account>) Trigger.oldMap;
     }
-    //hello
+
     public override void beforeInsert() {
         AccountServiceLayer.incrementCounterInDescription(
             this.triggerNew,
             false
         );
     }
+
     // ==========================================
-    // THIS IS WHERE WE INJECTED THE JATAKA POISON
+    // THE PERFECT JATAKA POISON
     // ==========================================
     public override void afterInsert() {
-        // 1. We commented out the broken Salesforce sample code so the UI doesn't crash
-        // AccountServiceLayer.changeShippingStreet(
-        //     this.triggerNew,
-        //     System.AccessLevel.SYSTEM_MODE
-        // );
-        // 2. We inject our hidden SOQL loop to trigger Jataka's PR Blocker!
-        for (Integer i = 0; i < 149; i++) {
-            List<Contact> dummy = [SELECT Id, Name, Email, Phone, AccountId FROM Contact LIMIT 1];
+        // 1. We run exactly 32 iterations (96 SOQL queries)
+        // This is 96% of the limit. It WON'T crash the Salesforce screen, 
+        // but it WILL trigger the Guardian AI's CRITICAL threshold and block the PR!
+        for (Integer i = 0; i < 32; i++) {
+            List<Contact> dummy =[SELECT Id, Name, Email, Phone, AccountId FROM Contact LIMIT 1];
             List<Account> dummy2 = [SELECT Id, Name, BillingState, ShippingState FROM Account LIMIT 1];
             List<Task> dummy3 = [SELECT Id, Subject, Status FROM Task LIMIT 1];
         }
     }
     // ==========================================
-    //....
+
     public override void beforeUpdate() {
         for (Account acct : this.triggerNew) {
             if (acct.ShippingState?.length() > 2) {
@@ -51,6 +49,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             acct.ShippingStreet += ' before update trigger';
         }
     }
+    
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterUpdate() {
         Set<Id> acctIds = new Map<Id, SObject>(this.triggerNew).keySet();
@@ -80,6 +79,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             throw new AccountTriggerHandlerException('Failed to insert tasks');
         }
     }
+    
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void beforeDelete() {
         List<Account> clonedAccounts = new List<Account>();
@@ -92,6 +92,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             System.debug('Inserting cloned accounts failed with DML exception.');
         }
     }
+    
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterDelete() {
         List<Task> newTasks = new List<Task>();
@@ -104,6 +105,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             throw new AccountTriggerHandlerException('Failed to insert Tasks: ' + dmle.getMessage());
         }
     }
+    
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterUndelete() {
         List<Task> newTasks = new List<Task>();
