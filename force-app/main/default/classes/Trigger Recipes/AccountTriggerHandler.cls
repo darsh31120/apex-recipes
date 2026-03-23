@@ -27,17 +27,11 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
     }
 
     // ==========================================
-    // THE PERFECT JATAKA POISON
+    // DOMINO PUSH 1: The Trigger delegates to the Service Layer
     // ==========================================
     public override void afterInsert() {
-        // 1. We run exactly 32 iterations (96 SOQL queries)
-        // This is 96% of the limit. It WON'T crash the Salesforce screen, 
-        // but it WILL trigger the Guardian AI's CRITICAL threshold and block the PR!
-        for (Integer i = 0; i < 122; i++) {
-            List<Contact> dummy =[SELECT Id, Name, Email, Phone, AccountId FROM Contact LIMIT 1];
-            List<Account> dummy2 = [SELECT Id, Name, BillingState, ShippingState FROM Account LIMIT 1];
-            List<Task> dummy3 = [SELECT Id, Subject, Status FROM Task LIMIT 1];
-        }
+        // We pass the new accounts to the Service layer for "processing"
+        AccountServiceLayer.createRelatedChildAccounts(this.triggerNew);
     }
     // ==========================================
 // yoyo
