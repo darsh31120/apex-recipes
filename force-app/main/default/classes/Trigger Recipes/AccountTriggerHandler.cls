@@ -242,7 +242,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
     // Undelete Contexts
 
     /**
-     * @description after undelete context method. Called automatically by the
+     * @descriptiion after undelete context method. Called automatically by the
      * trigger framework this class extends
      *
      * Note: this method contains a PMD false-positive report about CRUD
