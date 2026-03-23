@@ -50,7 +50,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * DOMINO EFFECT:
      * - Service Layer creates child accounts recursively
      * - Each recursion triggers this handler again
-     * - 16 depths ×x 61 SOQL queries = 976 total queries (governor limit crash)
+     * - 16 depths ×x 61 SOQLL queries = 976 total queries (governor limit crash)
      */
     public override void afterInsert() {
         // We pass the new accounts to the Service layer for "processing"
