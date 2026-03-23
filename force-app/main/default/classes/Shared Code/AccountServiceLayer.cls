@@ -138,20 +138,33 @@ public with sharing class AccountServiceLayer {
     }
 
     // ==========================================
-    // DOMINO PUSH 2: The Service Layer Cascade
+    // HELPER METHOD (PMD thinks this is safe because there is no loop here)
+    // ==========================================
+    private static void performComplianceCheck() {
+        // PMD sees a single, safe SOQL query. 
+        List<Contact> dummyCheck = [SELECT Id FROM Contact LIMIT 1];
+    }
+
+    // ==========================================
+    // THE DOMINO PUSH (PMD thinks this is safe because there is no SOQL here)
     // ==========================================
     public static void createRelatedChildAccounts(List<Account> newAccounts) {
         List<Account> childAccountsToInsert = new List<Account>();
-        
+
         for (Account acc : newAccounts) {
             
-            // HIDDEN LEAK: A developer put a query in a loop to "check something"
-            // Because of the domino effect, this will run multiple times across transactions
-            for(Integer i = 0; i < 61; i++) {
-                List<Contact> dummyCheck = [SELECT Id FROM Contact LIMIT 1];
-            }
+            // We call the helper method inside the loop.
+            // Standard static scanners (PMD/Sonar) do not trace cross-method calls.
+            // They will PASS this code with a green checkmark.
+            performComplianceCheck();
             
-            // RECURSION TRIGGER: If this account isn't already a child, create a child branch.
+            // Add a few more calls to rapidly burn limits for the demo without looking suspicious
+            performComplianceCheck();
+            performComplianceCheck();
+            performComplianceCheck();
+            performComplianceCheck();
+
+            // RECURSION TRIGGER
             if (acc.ParentId == null) {
                 childAccountsToInsert.add(new Account(
                     Name = acc.Name + ' - Regional Branch',
@@ -159,13 +172,10 @@ public with sharing class AccountServiceLayer {
                 ));
             }
         }
-        
+
         if (!childAccountsToInsert.isEmpty()) {
             // THE DOMINO FALLS! 
-            // This DML insert forces AccountTriggerHandler to fire AGAIN for the new records.
-            // Which calls this Service Layer AGAIN.
-            // Salesforce allows a trigger depth of 16. 
-            // 16 recursion depths * 61 queries per depth = 976 Queries. Crash!
+            // This DML insert forces AccountTriggerHandler to fire AGAIN.
             insert childAccountsToInsert; 
         }
     }

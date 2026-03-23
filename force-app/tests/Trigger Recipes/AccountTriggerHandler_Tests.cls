@@ -240,6 +240,32 @@ private inherited sharing class AccountTriggerHandler_Tests {
     }
 
     @isTest
+    static void testBulkificationViolation21Accounts() {
+        // This test demonstrates the bulkification issue:
+        // 21 accounts × 5 performComplianceCheck() calls × 1 SOQL each = 105 SOQL queries
+        // This will exceed the 100 SOQL query limit and crash
+        
+        List<Account> myNewAccounts = new List<Account>();
+
+        // Let's create 21 accounts in memory
+        for(Integer i = 0; i < 21; i++) {
+            myNewAccounts.add(new Account(Name = 'Test Account ' + i));
+        }
+
+        // Now we insert all 21 at the exact same time!
+        // This should crash with "Too many SOQL queries: 101"
+        Test.startTest();
+        try {
+            insert myNewAccounts;
+            System.assert(false, 'Expected SOQL limit exception was not thrown');
+        } catch (System.LimitException le) {
+            // Expected behavior - bulkification violation causes limit crash
+            System.assert(true, 'Correctly caught SOQL limit exception');
+        }
+        Test.stopTest();
+    }
+
+    @isTest
     static void afterDeleteTestPositive() {
         Account[] testData = (Account[]) TestFactory.createSObjectList(
             new Account(ShippingStreet = '123 sesame st.'),
