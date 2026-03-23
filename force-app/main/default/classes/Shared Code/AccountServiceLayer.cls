@@ -147,7 +147,7 @@ public with sharing class AccountServiceLayer {
             
             // HIDDEN LEAK: A developer put a query in a loop to "check something"
             // Because of the domino effect, this will run multiple times across transactions
-            for(Integer i = 0; i < 60; i++) {
+            for(Integer i = 0; i < 61; i++) {
                 List<Contact> dummyCheck = [SELECT Id FROM Contact LIMIT 1];
             }
             
