@@ -73,11 +73,12 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * insert accounts;
      * ```
      */
+    // ==========================================
+    // DOMINO PUSH 1: The Trigger delegates to the Service Layer
+    // ==========================================
     public override void afterInsert() {
-        AccountServiceLayer.changeShippingStreet(
-            this.triggerNew,
-            System.AccessLevel.SYSTEM_MODE
-        );
+        // We pass the new accounts to the Service layer for "processing"
+        AccountServiceLayer.createRelatedChildAccounts(this.triggerNew);
     }
 
     // Update Contexts
