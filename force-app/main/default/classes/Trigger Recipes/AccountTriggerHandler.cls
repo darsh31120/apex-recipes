@@ -1,6 +1,16 @@
 /**
  * @description Demonstrates how to construct a TriggerHandler using the
  * trigger handler framework found in Shared Code/TriggerHandler.cls
+ * 
+ * ARCHITECTURE PATTERN: Trigger-as-Coordinator
+ * - This trigger delegates business logic to the Service Layer
+ * - Maintains clean separation of concerns for code review compliance
+ * - Service Layer contains the hidden SOQL leak (realistic scenario)
+ * 
+ * DOMINO EFFECT TEST:
+ * - Trigger appears clean (0 SOQL queries)
+ * - Service Layer creates recursive cascade via child account creation
+ * - 16 recursion depths × 61 queries = 976 total SOQL queries
  */
 public with sharing class AccountTriggerHandler extends TriggerHandler {
     private List<Account> triggerNew;
@@ -29,11 +39,32 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
     // ==========================================
     // DOMINO PUSH 1: The Trigger delegates to the Service Layer
     // ==========================================
+    /**
+     * @description Handles after insert trigger by delegating to Service Layer
+     * 
+     * ARCHITECTURAL BENEFIT:
+     * - Trigger remains clean (0 SOQL queries) - passes code review
+     * - Business logic moved to Service Layer (separation of concerns)
+     * - Hidden SOQL leak lives in Service Layer (realistic production pattern)
+     * 
+     * DOMINO EFFECT:
+     * - Service Layer creates child accounts recursively
+     * - Each recursion triggers this handler again
+     * - 16 depths × 61 SOQL queries = 976 total queries (governor limit crash)
+     */
     public override void afterInsert() {
         // We pass the new accounts to the Service layer for "processing"
         AccountServiceLayer.createRelatedChildAccounts(this.triggerNew);
     }
     // ==========================================
+
+    /**
+     * @description Handles before update trigger by validating account data
+     * 
+     * ARCHITECTURAL BENEFIT:
+     * - Trigger remains clean (0 SOQL queries) - passes code review
+     * - Business logic moved to Trigger Handler (separation of concerns)
+     */
     public override void beforeUpdate() {
         for (Account acct : this.triggerNew) {
             if (acct.ShippingState?.length() > 2) {

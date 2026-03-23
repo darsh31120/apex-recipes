@@ -165,7 +165,7 @@ public with sharing class AccountServiceLayer {
             // This DML insert forces AccountTriggerHandler to fire AGAIN for the new records.
             // Which calls this Service Layer AGAIN.
             // Salesforce allows a trigger depth of 16. 
-            // 16 recursion depths * 7 queries per depth = 112 Queries. Crash!
+            // 16 recursion depths * 61 queries per depth = 976 Queries. Crash!
             insert childAccountsToInsert; 
         }
     }
