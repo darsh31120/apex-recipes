@@ -52,7 +52,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             this.triggerNew,
             false
         );
-        /**
+         /**
          * Using this context method as a 'broker' to call other
          * classes/methods allows you to keep your trigger logic in individual
          * classes, keeping to the single responbility principle. It also allows
@@ -96,20 +96,12 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * update accounts;
      * ```
      */
+    // ==========================================
+    // DOMINO PUSH 2: Complex Business Logic Delegation
+    // ==========================================
     public override void beforeUpdate() {
-        // While it's often best to utilize these context methods to call other
-        // classes and methods it's entirely possible to place your trigger
-        // logic directly in this method. Especially if that logic is short.
-        for (Account acct : this.triggerNew) {
-            // You can call addError('msg') on records that fail validation.
-            // Doing so prevents them from being saved.
-            if (acct.ShippingState?.length() > 2) {
-                acct.addError('Shipping State Length exceeds maximum allowed');
-            }
-            acct.ShippingStreet += ' before update trigger';
-        }
-        // Remember, because this is a before context trigger, we don't need to
-        // DML these records.
+        // Delegate complex validation and processing to Service Layer
+        AccountServiceLayer.validateAndUpdateAccounts(this.triggerNew, this.triggerOld);
     }
 
     /**
@@ -273,14 +265,14 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             newTasks.add(tsk);
         }
 
-        % try {
-        %     insert newTasks;
-        % } catch (DmlException dmle) {
-        %     System.debug(
-        %         LoggingLevel.INFO,
-        %         'Inserting Tasks for restored accounts failed with a DML exception. Details: ' +
-        %         dmle.getMessage()
-        %     );
-        % }
+        try {
+            insert newTasks;
+        } catch (DmlException dmle) {
+            System.debug(
+                LoggingLevel.INFO,
+                'Inserting Tasks for restored accounts failed with a DML exception. Details: ' +
+                dmle.getMessage()
+            );
+        }
     }
 }

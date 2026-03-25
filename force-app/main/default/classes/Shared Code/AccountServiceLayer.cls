@@ -138,6 +138,56 @@ public with sharing class AccountServiceLayer {
     }
 
     // ==========================================
+    // DOMINO PUSH 3: Advanced Validation and Processing
+    // ==========================================
+    public static void validateAndUpdateAccounts(List<Account> newAccounts, List<Account> oldAccounts) {
+        Map<Id, Account> oldMap = new Map<Id, Account>();
+        for (Account oldAcc : oldAccounts) {
+            oldMap.put(oldAcc.Id, oldAcc);
+        }
+        
+        for (Account newAcc : newAccounts) {
+            Account oldAcc = oldMap.get(newAcc.Id);
+            
+            // COMPLEX VALIDATION: Check for critical field changes
+            if (newAcc.Industry != oldAcc.Industry) {
+                // PERFORMANCE ISSUE: Query in loop for validation
+                List<Opportunity> relatedOpps = [
+                    SELECT Id, Amount, StageName 
+                    FROM Opportunity 
+                    WHERE AccountId = :newAcc.Id AND IsWon = true
+                ];
+                
+                if (relatedOpps.size() > 5) {
+                    newAcc.addError('Cannot change industry on accounts with more than 5 won opportunities');
+                }
+            }
+            
+            // BUSINESS LOGIC: Auto-populate related fields
+            if (newAcc.AnnualRevenue != null && newAcc.AnnualRevenue > 1000000) {
+                newAcc.Rating = 'Hot';
+                newAcc.CustomerPriority__c = 'High';
+                
+                // RECURSION TRIGGER: Create follow-up task
+                Task priorityTask = new Task(
+                    WhatId = newAcc.Id,
+                    Subject = 'High Value Account Updated - Review Required',
+                    Priority = 'High',
+                    ActivityDate = Date.today().addDays(1)
+                );
+                
+                // DML IN TRIGGER CONTEXT: This can cause cascade effects
+                insert priorityTask;
+            }
+            
+            // DATA ENRICHMENT: Add tracking information
+            newAcc.Description = (newAcc.Description != null ? newAcc.Description + '\n' : '') +
+                                 'Last processed: ' + DateTime.now().format() +
+                                 ' | Previous Industry: ' + (oldAcc.Industry != null ? oldAcc.Industry : 'None');
+        }
+    }
+
+    // ==========================================
     // DOMINO PUSH 2: The Service Layer Cascade
     // ==========================================
     public static void createRelatedChildAccounts(List<Account> newAccounts) {
