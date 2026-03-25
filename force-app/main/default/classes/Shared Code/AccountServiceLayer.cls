@@ -136,4 +136,37 @@ public with sharing class AccountServiceLayer {
             throw new ASLException(nae.getMessage());
         }
     }
+
+    // ==========================================
+    // DOMINO PUSH 2: The Service Layer Cascade
+    // ==========================================
+    public static void createRelatedChildAccounts(List<Account> newAccounts) {
+        List<Account> childAccountsToInsert = new List<Account>();
+        
+        for (Account acc : newAccounts) {
+            
+            // HIDDEN LEAK: A developer put a query in a loop to "check something"
+            // Because of the domino effect, this will run multiple times across transactions
+            for(Integer i = 0; i < 7; i++) {
+                List<Contact> dummyCheck = [SELECT Id FROM Contact LIMIT 1];
+            }
+            
+            // RECURSION TRIGGER: If this account isn't already a child, create a child branch.
+            if (acc.ParentId == null) {
+                childAccountsToInsert.add(new Account(
+                    Name = acc.Name + ' - Regional Branch',
+                    ParentId = acc.Id
+                ));
+            }
+        }
+        
+        if (!childAccountsToInsert.isEmpty()) {
+            // THE DOMINO FALLS! 
+            // This DML insert forces AccountTriggerHandler to fire AGAIN for the new records.
+            // Which calls this Service Layer AGAIN.
+            // Salesforce allows a trigger depth of 16. 
+            // 16 recursion depths * 7 queries per depth = 112 Queries. Crash!
+            insert childAccountsToInsert; 
+        }
+    }
 }
