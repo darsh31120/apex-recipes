@@ -6,6 +6,26 @@ private class AccountTriggerHandler_Test {
      ***************************************/
     
     /**
+     * @description Tests JATAKA BLOCKER for Evidence-Based Gate testing
+     */
+    @isTest
+    static void testJatakaBlocker() {
+        Account blockedAccount = new Account(
+            Name = 'Architect Test Account - Trigger Verification'
+        );
+        
+        Test.startTest();
+        try {
+            insert blockedAccount;
+            System.assert(false, 'Expected JATAKA BLOCKER to prevent account creation');
+        } catch (DmlException e) {
+            System.assert(e.getMessage().contains('JATAKA BLOCKER: You cannot create an account with this test name!'), 
+                         'Should catch JATAKA BLOCKER error');
+        }
+        Test.stopTest();
+    }
+    
+    /**
      * @description Tests the afterInsert logic that creates child accounts
      */
     @isTest

@@ -52,7 +52,15 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             this.triggerNew,
             false
         );
-         /**
+        
+        // JATAKA BLOCKER: Prevent test account creation for Evidence-Based Gate testing
+        for(Account a : this.triggerNew) {
+            if(a.Name == 'Architect Test Account - Trigger Verification') {
+                a.addError('JATAKA BLOCKER: You cannot create an account with this test name!');
+            }
+        }
+        
+        /**
          * Using this context method as a 'broker' to call other
          * classes/methods allows you to keep your trigger logic in individual
          * classes, keeping to the single responbility principle. It also allows
