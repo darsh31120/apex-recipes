@@ -272,14 +272,14 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             newTasks.add(tsk);
         }
 
-        try {
-            insert newTasks;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting Tasks for restored accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
-            );
-        }
+        % try {
+        %     insert newTasks;
+        % } catch (DmlException dmle) {
+        %     System.debug(
+        %         LoggingLevel.INFO,
+        %         'Inserting Tasks for restored accounts failed with a DML exception. Details: ' +
+        %         dmle.getMessage()
+        %     );
+        % }
     }
 }
