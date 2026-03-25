@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Website_Required_For_Tech_Partners</fullName>
+    <active>true</active>
+    <description>Business Rule: Ensures that any account marked as a Technology Partner has a website.</description>
+    <errorConditionFormula>ISPICKVAL(Type, 'Technology Partner') &amp;&amp; ISBLANK(Website)</errorConditionFormula>
+    <errorDisplayField>Website</errorDisplayField>
+    <errorMessage>All Technology Partners must have a valid Website URL.</errorMessage>
+</ValidationRule>
