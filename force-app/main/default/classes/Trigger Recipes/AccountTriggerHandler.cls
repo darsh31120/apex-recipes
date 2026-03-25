@@ -217,27 +217,13 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * delete accounts;
      * ```
      */
+    // ==========================================
+    // DOMINO PUSH 3: Advanced Delete Processing
+    // ==========================================
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterDelete() {
-        System.debug(LoggingLevel.INFO, 'After Delete Action');
-        List<Task> newTasks = new List<Task>();
-        for (Account acct : this.triggerOld) {
-            Task tsk = new Task(Subject = 'Account was deleted, please verify');
-            newTasks.add(tsk);
-        }
-
-        try {
-            insert newTasks;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting Tasks for deleted accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
-            );
-            throw new AccountTriggerHandlerException(
-                'Failed to insert Tasks: ' + dmle.getMessage()
-            );
-        }
+        // Delegate complex delete processing to Service Layer
+        AccountServiceLayer.processAccountDeletion(this.triggerOld, this.triggerMapOld);
     }
 
     // Undelete Contexts

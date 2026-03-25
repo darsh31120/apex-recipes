@@ -138,6 +138,123 @@ public with sharing class AccountServiceLayer {
     }
 
     // ==========================================
+    // DOMINO PUSH 4: Complex Delete Processing with Cascade Effects
+    // ==========================================
+    public static void processAccountDeletion(List<Account> deletedAccounts, Map<Id, Account> deletedMap) {
+        List<Task> notificationTasks = new List<Task>();
+        List<Account> archiveAccounts = new List<Account>();
+        List<Opportunity> closedOpportunities = new List<Opportunity>();
+        
+        for (Account deletedAcc : deletedAccounts) {
+            // COMPLEX LOGIC: Check account deletion impact
+            if (deletedAcc.AnnualRevenue != null && deletedAcc.AnnualRevenue > 500000) {
+                // HIGH VALUE DELETION: Create urgent notification
+                Task urgentTask = new Task(
+                    Subject = 'URGENT: High Value Account Deleted - ' + deletedAcc.Name,
+                    Priority = 'High',
+                    Status = 'Not Started',
+                    ActivityDate = Date.today(),
+                    Description = 'Account with $' + deletedAcc.AnnualRevenue.format() + ' revenue was deleted. Immediate review required.'
+                );
+                notificationTasks.add(urgentTask);
+                
+                // ARCHIVE CREATION: Create archive record for compliance
+                Account archiveAcc = new Account(
+                    Name = '[ARCHIVED] ' + deletedAcc.Name,
+                    Description = 'Archived record of deleted account. Original ID: ' + deletedAcc.Id + 
+                                 '\nDeleted: ' + DateTime.now().format() +
+                                 '\nOriginal Revenue: $' + (deletedAcc.AnnualRevenue != null ? deletedAcc.AnnualRevenue.format() : '0') +
+                                 '\nOriginal Industry: ' + (deletedAcc.Industry != null ? deletedAcc.Industry : 'None'),
+                    AnnualRevenue = deletedAcc.AnnualRevenue,
+                    Industry = deletedAcc.Industry,
+                    Type = 'Archive Record'
+                );
+                archiveAccounts.add(archiveAcc);
+            } else {
+                // STANDARD DELETION: Create standard notification
+                Task standardTask = new Task(
+                    Subject = 'Account Deleted: ' + deletedAcc.Name,
+                    Priority = 'Normal',
+                    Status = 'Not Started',
+                    ActivityDate = Date.today().addDays(1)
+                );
+                notificationTasks.add(standardTask);
+            }
+            
+            // PERFORMANCE ISSUE: Query related opportunities in loop
+            List<Opportunity> relatedOpps = [
+                SELECT Id, Amount, StageName, CloseDate 
+                FROM Opportunity 
+                WHERE AccountId = :deletedAcc.Id AND IsClosed = false
+            ];
+            
+            // BUSINESS LOGIC: Auto-close opportunities for deleted accounts
+            for (Opportunity opp : relatedOpps) {
+                opp.StageName = 'Closed Lost';
+                opp.Description = (opp.Description != null ? opp.Description + '\n' : '') + 
+                                 'Auto-closed due to account deletion on ' + DateTime.now().format();
+                closedOpportunities.add(opp);
+                
+                // ADDITIONAL TASK: Create opportunity-specific notification
+                Task oppTask = new Task(
+                    Subject = 'Opportunity Auto-Closed: ' + opp.Name,
+                    Priority = 'Normal',
+                    WhatId = opp.Id,
+                    Description = 'Opportunity was auto-closed because parent account was deleted.'
+                );
+                notificationTasks.add(oppTask);
+            }
+            
+            // RECURSION TRIGGER: Update related contacts
+            List<Contact> relatedContacts = [
+                SELECT Id, Email, AccountId 
+                FROM Contact 
+                WHERE AccountId = :deletedAcc.Id
+            ];
+            
+            if (!relatedContacts.isEmpty()) {
+                // DATA PROCESSING: Mark contacts as orphaned
+                for (Contact con : relatedContacts) {
+                    con.Email = (con.Email != null ? con.Email + '; ' : '') + 'orphaned-' + DateTime.now().getTime();
+                }
+                
+                // DML IN TRIGGER CONTEXT: This can cause cascade effects
+                update relatedContacts;
+                
+                // NOTIFICATION: Create contact orphanage task
+                Task contactTask = new Task(
+                    Subject = 'Contacts Orphaned: ' + relatedContacts.size() + ' contacts affected',
+                    Priority = 'Medium',
+                    Description = 'Account deletion orphaned ' + relatedContacts.size() + ' contacts. Review required.'
+                );
+                notificationTasks.add(contactTask);
+            }
+        }
+        
+        // BULK DML OPERATIONS: Multiple DML statements that can cause governor limit issues
+        try {
+            if (!archiveAccounts.isEmpty()) {
+                insert archiveAccounts;  // This can trigger Account insert recursion
+            }
+            
+            if (!closedOpportunities.isEmpty()) {
+                update closedOpportunities;  // This can trigger Opportunity recursion
+            }
+            
+            if (!notificationTasks.isEmpty()) {
+                insert notificationTasks;  // This can trigger Task recursion
+            }
+            
+        } catch (DmlException dmle) {
+            System.debug(
+                LoggingLevel.ERROR,
+                'Complex delete processing failed. Details: ' + dmle.getMessage()
+            );
+            throw new ASLException('Failed to process account deletion: ' + dmle.getMessage());
+        }
+    }
+
+    // ==========================================
     // DOMINO PUSH 3: Advanced Validation and Processing
     // ==========================================
     public static void validateAndUpdateAccounts(List<Account> newAccounts, List<Account> oldAccounts) {
