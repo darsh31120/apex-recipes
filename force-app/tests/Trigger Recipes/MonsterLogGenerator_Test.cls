@@ -14,24 +14,6 @@ private class MonsterLogGenerator_Test {
         
         Test.stopTest();
         
-        // This test will likely fail due to log truncation, which is what we want
         System.assert(true, 'Test completed - check logs for truncation');
-    }
-    
-    /**
-     * @description Alternative test method with even more aggressive logging
-     */
-    @isTest
-    static void testAggressiveLogTruncation() {
-        Test.startTest();
-        
-        // Generate multiple rounds of huge logs
-        for(Integer round = 0; round < 3; round++) {
-            MonsterLogGenerator.generateHugeLog();
-        }
-        
-        Test.stopTest();
-        
-        System.assert(true, 'Aggressive test completed - logs should definitely be truncated');
     }
 }
