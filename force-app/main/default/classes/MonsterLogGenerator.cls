@@ -2,7 +2,7 @@ public class MonsterLogGenerator {
     public static void generateHugeLog() {
         String bloat = 'X'.repeat(5000);
 
-        for(Integer i = 0; i < 4300; i++) {
+        for(Integer i = 0; i < 4400; i++) {
             System.debug(LoggingLevel.FINEST, bloat);
         }
     }
