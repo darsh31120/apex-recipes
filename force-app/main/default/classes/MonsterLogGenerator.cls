@@ -4,7 +4,7 @@ public class MonsterLogGenerator {
         System.debug('Forcing Salesforce to accept this new version!'); 
         
         String bloat = 'X'.repeat(5000);
-        for(Integer i = 0; i < 5500; i++) {
+        for(Integer i = 0; i < 6000; i++) {
             System.debug(LoggingLevel.ERROR, bloat);
         }
     }
