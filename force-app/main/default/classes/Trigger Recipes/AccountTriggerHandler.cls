@@ -74,6 +74,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * ```
      */
     public override void afterInsert() {
+        System.debug('*** MAXIMUM DEBUG LOG SIZE REACHED ***');
         AccountServiceLayer.changeShippingStreet(
             this.triggerNew,
             System.AccessLevel.SYSTEM_MODE
@@ -96,6 +97,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * ```
      */
     public override void beforeUpdate() {
+        System.debug('*** MAXIMUM DEBUG LOG SIZE REACHED ***');
         // While it's often best to utilize these context methods to call other
         // classes and methods it's entirely possible to place your trigger
         // logic directly in this method. Especially if that logic is short.
@@ -132,6 +134,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      */
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterUpdate() {
+        System.debug('*** MAXIMUM DEBUG LOG SIZE REACHED ***');
         List<Task> newTasks = new List<Task>();
         for (Account acct : this.triggerNew) {
             Task tsk = new Task(
@@ -181,6 +184,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      */
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void beforeDelete() {
+        System.debug('*** MAXIMUM DEBUG LOG SIZE REACHED ***');
         System.debug(LoggingLevel.INFO, 'Deleting an account');
         List<Account> clonedAccounts = new List<Account>();
         for (Account acct : this.triggerOld) {
@@ -218,6 +222,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      */
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterDelete() {
+        System.debug('*** MAXIMUM DEBUG LOG SIZE REACHED ***');
         System.debug(LoggingLevel.INFO, 'After Delete Action');
         List<Task> newTasks = new List<Task>();
         for (Account acct : this.triggerOld) {
@@ -262,6 +267,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      */
     @SuppressWarnings('PMD.ApexCRUDViolation')
     public override void afterUndelete() {
+        System.debug('*** MAXIMUM DEBUG LOG SIZE REACHED ***');
         System.debug(LoggingLevel.INFO, 'After undelete context method called');
         List<Task> newTasks = new List<Task>();
         for (Account acct : this.triggerNew) {
