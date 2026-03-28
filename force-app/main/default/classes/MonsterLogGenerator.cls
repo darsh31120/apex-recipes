@@ -1,11 +1,12 @@
 public class MonsterLogGenerator {
     public static void generateHugeLog() {
-        // ADDING THIS TO BREAK THE CACHE
-        System.debug('Forcing Salesforce to accept this new version!'); 
-        
-        String bloat = 'X'.repeat(5000);
-        for(Integer i = 0; i < 6000; i++) {
-            System.debug(LoggingLevel.ERROR, bloat);
+        // Change the string to be even bigger so we hit 20MB faster
+        // 10,000 chars * 2,500 loops = 25MB (Safely over 20MB)
+        String bloat = 'X'.repeat(10000); 
+
+        for(Integer i = 0; i < 2500; i++) {
+            // Use ERROR level to ensure it is captured
+            System.debug(LoggingLevel.ERROR, 'TRUNCATE_TEST: ' + bloat);
         }
     }
 }
