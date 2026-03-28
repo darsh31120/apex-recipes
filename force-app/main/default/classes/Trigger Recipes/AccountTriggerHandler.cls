@@ -69,7 +69,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * ```
      * Account[] accounts = new Account[]();
      * accounts.add(new Account(name='example 1'));
-     * accounts.add(new Account(name='example 2'));
+     * accountssss.add(new Account(name='example 2'));
      * insert accounts;
      * ```
      */
