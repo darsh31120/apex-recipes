@@ -1,10 +1,10 @@
 public class MonsterLogGenerator {
     public static void generateHugeLog() {
-        // 5000 chars * 4500 iterations = ~22.5MB
+        // ADDING THIS TO BREAK THE CACHE
+        System.debug('Forcing Salesforce to accept this new version!'); 
+        
         String bloat = 'X'.repeat(5000);
-
-        for(Integer i = 0; i < 7200; i++) {
-            // Changed from FINEST to ERROR so it bypasses the SFGuardianV3 'INFO' filter
+        for(Integer i = 0; i < 9000; i++) {
             System.debug(LoggingLevel.ERROR, bloat);
         }
     }
