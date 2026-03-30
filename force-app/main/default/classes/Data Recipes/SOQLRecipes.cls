@@ -356,19 +356,19 @@ public with sharing class SOQLRecipes {
         
         // Multiple aggregate queries
         AggregateResult[] acctByIndustry = [
-            SELECT Industry, COUNT(Id) count, AVG(AnnualRevenue) avgRev
+            SELECT Industry, COUNT(Id) acctCount, AVG(AnnualRevenue) avgRevenue
             FROM Account 
             WHERE Industry != null
             GROUP BY Industry
-            ORDER BY count DESC
+            ORDER BY acctCount DESC
         ];
         results.addAll(acctByIndustry);
         
         AggregateResult[] oppByStage = [
-            SELECT StageName, COUNT(Id) count, SUM(Amount) total
+            SELECT StageName, COUNT(Id) stageCount, SUM(Amount) totalAmount
             FROM Opportunity 
             GROUP BY StageName
-            ORDER BY total DESC
+            ORDER BY totalAmount DESC
         ];
         results.addAll(oppByStage);
         

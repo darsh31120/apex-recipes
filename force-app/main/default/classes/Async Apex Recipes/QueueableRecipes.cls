@@ -100,9 +100,9 @@ public with sharing class QueueableRecipes implements Queueable {
             // Query each contact's related opportunities
             for(Contact contact : acct.Contacts) {
                 List<Opportunity> contactOpps = [
-                    SELECT Id, Name, Amount, PrimaryContactId
+                    SELECT Id, Name, Amount
                     FROM Opportunity 
-                    WHERE PrimaryContactId = :contact.Id
+                    WHERE AccountId = :acct.Id
                     LIMIT 5
                 ];
             }
@@ -119,15 +119,15 @@ public with sharing class QueueableRecipes implements Queueable {
         
         // Query 4: Multiple aggregate queries
         AggregateResult[] accountStats = [
-            SELECT Industry, COUNT(Id) total, AVG(AnnualRevenue) avgRev
+            SELECT Industry, COUNT(Id) acctCount, AVG(AnnualRevenue) avgRevenue
             FROM Account 
             WHERE Industry != null
             GROUP BY Industry
-            ORDER BY total DESC
+            ORDER BY acctCount DESC
         ];
         
         AggregateResult[] oppStats = [
-            SELECT StageName, COUNT(Id) total, SUM(Amount) totalAmount
+            SELECT StageName, COUNT(Id) stageCount, SUM(Amount) totalAmount
             FROM Opportunity 
             GROUP BY StageName
             ORDER BY totalAmount DESC

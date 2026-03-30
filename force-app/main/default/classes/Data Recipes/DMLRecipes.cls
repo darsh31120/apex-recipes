@@ -444,8 +444,7 @@ public with sharing class DMLRecipes {
                    (SELECT Id, Name, Amount, StageName, CloseDate FROM Opportunities ORDER BY Amount DESC),
                    (SELECT Id, Subject, Status, Priority FROM Tasks WHERE IsClosed = false),
                    (SELECT Id, Subject, ActivityDateTime FROM Events WHERE ActivityDateTime >= YESTERDAY),
-                   (SELECT Id, CaseNumber, Status, Origin FROM Cases),
-                   (SELECT Id, Name, Amount FROM Opportunities WHERE StageName = 'Closed Won')
+                   (SELECT Id, CaseNumber, Status, Origin FROM Cases)
             FROM Account 
             WHERE Id IN :accountIds
             ORDER BY Name
