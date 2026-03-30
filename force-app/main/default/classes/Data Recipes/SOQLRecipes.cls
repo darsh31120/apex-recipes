@@ -259,4 +259,128 @@ public with sharing class SOQLRecipes {
         ];
         return (Double) groupedResults[0].get('total');
     }
+
+    /**
+     * @description Demonstrates multiple SOQL queries that could exceed limits
+     * This method intentionally performs multiple queries in a loop to show
+     * how query limits can be exceeded
+     * @param numberOfQueries Number of iterations to perform
+     * @return List of account counts found
+     */
+    public static List<Integer> demonstrateQueryLimitExceeded(Integer numberOfQueries) {
+        List<Integer> counts = new List<Integer>();
+        
+        // Query 1: Basic account query in loop
+        for(Integer i = 0; i < numberOfQueries; i++) {
+            List<Account> accounts = [
+                SELECT Id, Name, Industry
+                FROM Account 
+                WHERE Industry = 'Technology'
+                LIMIT 10
+            ];
+            counts.add(accounts.size());
+        }
+        
+        // Query 2: Contact queries in loop
+        for(Integer i = 0; i < numberOfQueries; i++) {
+            List<Contact> contacts = [
+                SELECT Id, Name, Email
+                FROM Contact 
+                WHERE Email != null
+                LIMIT 5
+            ];
+            counts.add(contacts.size());
+        }
+        
+        // Query 3: Opportunity queries in loop
+        for(Integer i = 0; i < numberOfQueries; i++) {
+            List<Opportunity> opps = [
+                SELECT Id, Name, Amount
+                FROM Opportunity 
+                WHERE Amount > 1000
+                LIMIT 5
+            ];
+            counts.add(opps.size());
+        }
+        
+        return counts;
+    }
+
+    /**
+     * @description Demonstrates complex relationship queries that can be expensive
+     * @return Map of account to related records count
+     */
+    public static Map<Id, Integer> demonstrateExpensiveRelationshipQueries() {
+        Map<Id, Integer> accountRecordCounts = new Map<Id, Integer>();
+        
+        // Expensive relationship query with multiple subqueries
+        List<Account> accountsWithEverything = [
+            SELECT Id, Name,
+                   (SELECT Id, Name FROM Contacts),
+                   (SELECT Id, Name, Amount FROM Opportunities),
+                   (SELECT Id, Subject FROM Tasks),
+                   (SELECT Id, Subject FROM Events),
+                   (SELECT Id, CaseNumber FROM Cases)
+            FROM Account 
+            WHERE Industry != null
+            LIMIT 50
+        ];
+        
+        for(Account acct : accountsWithEverything) {
+            Integer totalRelated = acct.Contacts.size() + acct.Opportunities.size() + 
+                                 acct.Tasks.size() + acct.Events.size() + acct.Cases.size();
+            accountRecordCounts.put(acct.Id, totalRelated);
+        }
+        
+        // Additional expensive queries for each account found
+        for(Id accountId : accountRecordCounts.keySet()) {
+            // Query each account's related leads
+            List<Lead> relatedLeads = [
+                SELECT Id, Company, Status
+                FROM Lead 
+                WHERE Company = :accountId
+                LIMIT 10
+            ];
+            accountRecordCounts.put(accountId, accountRecordCounts.get(accountId) + relatedLeads.size());
+        }
+        
+        return accountRecordCounts;
+    }
+
+    /**
+     * @description Demonstrates aggregate queries that can be resource intensive
+     * @return List of aggregate results
+     */
+    public static List<AggregateResult> demonstrateExpensiveAggregateQueries() {
+        List<AggregateResult> results = new List<AggregateResult>();
+        
+        // Multiple aggregate queries
+        AggregateResult[] acctByIndustry = [
+            SELECT Industry, COUNT(Id) count, AVG(AnnualRevenue) avgRev
+            FROM Account 
+            WHERE Industry != null
+            GROUP BY Industry
+            ORDER BY count DESC
+        ];
+        results.addAll(acctByIndustry);
+        
+        AggregateResult[] oppByStage = [
+            SELECT StageName, COUNT(Id) count, SUM(Amount) total
+            FROM Opportunity 
+            GROUP BY StageName
+            ORDER BY total DESC
+        ];
+        results.addAll(oppByStage);
+        
+        AggregateResult[] contactsByAccount = [
+            SELECT AccountId, COUNT(Id) contactCount
+            FROM Contact 
+            WHERE AccountId != null
+            GROUP BY AccountId
+            HAVING COUNT(Id) > 5
+        ];
+        results.addAll(contactsByAccount);
+        
+        return results;
+    }
 }

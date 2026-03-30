@@ -73,6 +73,10 @@ public with sharing class BatchApexRecipes implements Database.Batchable<SObject
                 acct.Name = null;
             }
         }
+        
+        // Add expensive SOQL queries that could exceed limits
+        performExpensiveQueries(scope);
+        
         /**
          * it's useful to use the Database.* methods inside Batch classes to
          * separate succeses and failures. But the tracking of these across many
@@ -93,6 +97,94 @@ public with sharing class BatchApexRecipes implements Database.Batchable<SObject
                 // Database.stateful
                 failures.add(sr.id);
             }
+        }
+    }
+    
+    /**
+     * @description Performs expensive SOQL queries that could exceed limits
+     * @param scope List of accounts to query related data for
+     */
+    private void performExpensiveQueries(List<Account> scope) {
+        // Query 1: For each account, query related contacts
+        for(Account acct : scope) {
+            List<Contact> contacts = [
+                SELECT Id, Name, Email, Phone
+                FROM Contact 
+                WHERE AccountId = :acct.Id
+                LIMIT 10
+            ];
+            System.debug('Account ' + acct.Name + ' has ' + contacts.size() + ' contacts');
+        }
+        
+        // Query 2: For each account, query related opportunities
+        for(Account acct : scope) {
+            List<Opportunity> opportunities = [
+                SELECT Id, Name, Amount, StageName, CloseDate
+                FROM Opportunity 
+                WHERE AccountId = :acct.Id
+                ORDER BY Amount DESC
+                LIMIT 5
+            ];
+            System.debug('Account ' + acct.Name + ' has ' + opportunities.size() + ' opportunities');
+        }
+        
+        // Query 3: For each account, query related cases
+        for(Account acct : scope) {
+            List<Case> cases = [
+                SELECT Id, CaseNumber, Status, Origin
+                FROM Case 
+                WHERE AccountId = :acct.Id
+                AND Status != 'Closed'
+                LIMIT 5
+            ];
+            System.debug('Account ' + acct.Name + ' has ' + cases.size() + ' open cases');
+        }
+        
+        // Query 4: Complex relationship query with multiple subqueries
+        Set<Id> accountIds = new Set<Id>();
+        for(Account acct : scope) {
+            accountIds.add(acct.Id);
+        }
+        
+        List<Account> accountsWithAllRelationships = [
+            SELECT Id, Name,
+                   (SELECT Id, Name, Email FROM Contacts),
+                   (SELECT Id, Name, Amount FROM Opportunities),
+                   (SELECT Id, Subject, Status FROM Tasks),
+                   (SELECT Id, Subject FROM Events),
+                   (SELECT Id, CaseNumber, Status FROM Cases)
+            FROM Account 
+            WHERE Id IN :accountIds
+        ];
+        
+        // Query 5: Aggregate queries for each account
+        for(Account acct : scope) {
+            AggregateResult[] contactStats = [
+                SELECT COUNT(Id) contactCount
+                FROM Contact 
+                WHERE AccountId = :acct.Id
+            ];
+            
+            AggregateResult[] oppStats = [
+                SELECT COUNT(Id) oppCount, SUM(Amount) totalAmount
+                FROM Opportunity 
+                WHERE AccountId = :acct.Id
+            ];
+            
+            System.debug('Account ' + acct.Name + ' stats - Contacts: ' + 
+                        contactStats[0].get('contactCount') + 
+                        ', Opps: ' + oppStats[0].get('oppCount'));
+        }
+        
+        // Query 6: Additional expensive queries in loops
+        for(Integer i = 0; i < 5; i++) {
+            List<Account> allAccounts = [
+                SELECT Id, Name, Industry, AnnualRevenue
+                FROM Account 
+                WHERE Industry = 'Technology'
+                LIMIT 20
+            ];
+            System.debug('Query iteration ' + i + ' found ' + allAccounts.size() + ' tech accounts');
         }
     }
 

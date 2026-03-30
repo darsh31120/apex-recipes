@@ -370,4 +370,175 @@ public with sharing class DMLRecipes {
         }
         return accts;
     }
+
+    /**
+     * @description Demonstrates DML operations with expensive SOQL queries that can exceed limits
+     * @param accountNames List of account names to create and query
+     * @return List of created accounts with related data
+     */
+    public static List<Account> performDMLWithExpensiveQueries(List<String> accountNames) {
+        List<Account> createdAccounts = new List<Account>();
+        
+        // Create accounts
+        for(String name : accountNames) {
+            Account acct = new Account(Name = name, Industry = 'Technology');
+            createdAccounts.add(acct);
+        }
+        
+        insert createdAccounts;
+        
+        // Perform expensive queries after DML
+        performExpensiveSOQLQueries(createdAccounts);
+        
+        return createdAccounts;
+    }
+    
+    /**
+     * @description Performs multiple expensive SOQL queries that could exceed limits
+     * @param accounts List of accounts to query related data for
+     */
+    private static void performExpensiveSOQLQueries(List<Account> accounts) {
+        // Query 1: Multiple queries in loops for each account
+        for(Account acct : accounts) {
+            // Query contacts for each account
+            List<Contact> contacts = [
+                SELECT Id, Name, Email, Phone, Title
+                FROM Contact 
+                WHERE AccountId = :acct.Id
+                LIMIT 15
+            ];
+            
+            // Query opportunities for each account
+            List<Opportunity> opportunities = [
+                SELECT Id, Name, Amount, StageName, Probability
+                FROM Opportunity 
+                WHERE AccountId = :acct.Id
+                ORDER BY Amount DESC
+                LIMIT 10
+            ];
+            
+            // Query cases for each account
+            List<Case> cases = [
+                SELECT Id, CaseNumber, Status, Origin, Priority
+                FROM Case 
+                WHERE AccountId = :acct.Id
+                ORDER BY CreatedDate DESC
+                LIMIT 10
+            ];
+            
+            System.debug('Account: ' + acct.Name + 
+                        ' - Contacts: ' + contacts.size() + 
+                        ', Opps: ' + opportunities.size() + 
+                        ', Cases: ' + cases.size());
+        }
+        
+        // Query 2: Complex relationship queries with multiple subqueries
+        Set<Id> accountIds = new Set<Id>();
+        for(Account acct : accounts) {
+            accountIds.add(acct.Id);
+        }
+        
+        List<Account> accountsWithAllRelationships = [
+            SELECT Id, Name, Industry, AnnualRevenue,
+                   (SELECT Id, Name, Email, Title FROM Contacts ORDER BY CreatedDate DESC),
+                   (SELECT Id, Name, Amount, StageName, CloseDate FROM Opportunities ORDER BY Amount DESC),
+                   (SELECT Id, Subject, Status, Priority FROM Tasks WHERE IsClosed = false),
+                   (SELECT Id, Subject, ActivityDateTime FROM Events WHERE ActivityDateTime >= YESTERDAY),
+                   (SELECT Id, CaseNumber, Status, Origin FROM Cases),
+                   (SELECT Id, Name, Amount FROM Opportunities WHERE StageName = 'Closed Won')
+            FROM Account 
+            WHERE Id IN :accountIds
+            ORDER BY Name
+        ];
+        
+        // Query 3: Multiple aggregate queries
+        for(Account acct : accounts) {
+            // Contact statistics
+            AggregateResult[] contactStats = [
+                SELECT COUNT(Id) totalContacts, 
+                       COUNT_DISTINCT(Title) uniqueTitles
+                FROM Contact 
+                WHERE AccountId = :acct.Id
+            ];
+            
+            // Opportunity statistics
+            AggregateResult[] oppStats = [
+                SELECT COUNT(Id) totalOpps, 
+                       SUM(Amount) totalAmount, 
+                       AVG(Amount) avgAmount
+                FROM Opportunity 
+                WHERE AccountId = :acct.Id
+            ];
+            
+            // Case statistics
+            AggregateResult[] caseStats = [
+                SELECT COUNT(Id) totalCases, 
+                       COUNT(Id) openCases
+                FROM Case 
+                WHERE AccountId = :acct.Id
+                AND Status != 'Closed'
+            ];
+            
+            System.debug('Account ' + acct.Name + ' - Contact Stats: ' + contactStats[0].get('totalContacts') +
+                        ', Opp Stats: ' + oppStats[0].get('totalOpps') +
+                        ', Case Stats: ' + caseStats[0].get('totalCases'));
+        }
+        
+        // Query 4: Additional expensive queries in loops
+        for(Integer i = 0; i < 10; i++) {
+            List<Account> techAccounts = [
+                SELECT Id, Name, AnnualRevenue, Website, Phone
+                FROM Account 
+                WHERE Industry = 'Technology'
+                AND AnnualRevenue > 1000000
+                ORDER BY AnnualRevenue DESC
+                LIMIT 25
+            ];
+            
+            List<Account> financeAccounts = [
+                SELECT Id, Name, AnnualRevenue, Website, Phone
+                FROM Account 
+                WHERE Industry = 'Finance'
+                AND AnnualRevenue > 500000
+                ORDER BY AnnualRevenue DESC
+                LIMIT 25
+            ];
+            
+            System.debug('Iteration ' + i + ' - Tech: ' + techAccounts.size() + 
+                        ', Finance: ' + financeAccounts.size());
+        }
+        
+        // Query 5: More relationship queries
+        for(Account acct : accountsWithAllRelationships) {
+            // Query each contact's related activities
+            for(Contact contact : acct.Contacts) {
+                List<Task> contactTasks = [
+                    SELECT Id, Subject, Status, Priority
+                    FROM Task 
+                    WHERE WhoId = :contact.Id
+                    AND IsClosed = false
+                    LIMIT 5
+                ];
+                
+                List<Event> contactEvents = [
+                    SELECT Id, Subject, ActivityDateTime
+                    FROM Event 
+                    WHERE WhoId = :contact.Id
+                    AND ActivityDateTime >= TODAY
+                    LIMIT 3
+                ];
+            }
+            
+            // Query each opportunity's related activities
+            for(Opportunity opp : acct.Opportunities) {
+                List<Task> oppTasks = [
+                    SELECT Id, Subject, Status
+                    FROM Task 
+                    WHERE WhatId = :opp.Id
+                    AND IsClosed = false
+                    LIMIT 5
+                ];
+            }
+        }
+    }
 }
