@@ -78,6 +78,31 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             this.triggerNew,
             System.AccessLevel.SYSTEM_MODE
         );
+        
+        // SOQL Query Example 1: Query related Contacts for new Accounts
+        Set<Id> accountIds = new Set<Id>();
+        for(Account acct : this.triggerNew) {
+            accountIds.add(acct.Id);
+        }
+        
+        List<Contact> relatedContacts = [
+            SELECT Id, FirstName, LastName, Email, AccountId
+            FROM Contact 
+            WHERE AccountId IN :accountIds
+        ];
+        
+        System.debug('Found ' + relatedContacts.size() + ' related contacts for new accounts');
+        
+        // SOQL Query Example 2: Query Account with related Opportunities
+        List<Account> accountsWithOpportunities = [
+            SELECT Id, Name, (SELECT Id, Name, Amount, CloseDate FROM Opportunities)
+            FROM Account 
+            WHERE Id IN :accountIds
+        ];
+        
+        for(Account acct : accountsWithOpportunities) {
+            System.debug('Account ' + acct.Name + ' has ' + acct.Opportunities.size() + ' opportunities');
+        }
     }
 
     // Update Contexts
@@ -157,6 +182,43 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             );
             throw new AccountTriggerHandlerException('Failed to insert tasks');
         }
+        
+        // SOQL Query Example 3: Query Accounts with specific field changes
+        Set<Id> changedAccounts = new Set<Id>();
+        for(Account newAcct : this.triggerNew) {
+            Account oldAcct = this.triggerMapOld.get(newAcct.Id);
+            if(newAcct.AnnualRevenue != oldAcct.AnnualRevenue) {
+                changedAccounts.add(newAcct.Id);
+            }
+        }
+        
+        if(!changedAccounts.isEmpty()) {
+            List<Account> revenueChangedAccounts = [
+                SELECT Id, Name, AnnualRevenue, Industry, Type
+                FROM Account 
+                WHERE Id IN :changedAccounts
+                ORDER BY AnnualRevenue DESC
+                LIMIT 10
+            ];
+            
+            for(Account acct : revenueChangedAccounts) {
+                System.debug('Revenue changed for account: ' + acct.Name + ' - New Revenue: ' + acct.AnnualRevenue);
+            }
+        }
+        
+        // SOQL Query Example 4: Aggregate query for Account statistics
+        AggregateResult[] accountStats = [
+            SELECT Industry, COUNT(Id) accountCount, AVG(AnnualRevenue) avgRevenue
+            FROM Account 
+            WHERE Id IN :triggerMapNew.keySet()
+            GROUP BY Industry
+        ];
+        
+        for(AggregateResult ar : accountStats) {
+            System.debug('Industry: ' + ar.get('Industry') + 
+                        ', Count: ' + ar.get('accountCount') + 
+                        ', Avg Revenue: ' + ar.get('avgRevenue'));
+        }
     }
 
     // Delete Contexts
@@ -195,6 +257,39 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
                 'Inserting cloned accounts failed with DML exception. Details: ' +
                 dmle.getMessage()
             );
+        }
+        
+        // SOQL Query Example 5: Query related Cases before Account deletion
+        Set<Id> accountIdsToDelete = new Set<Id>();
+        for(Account acct : this.triggerOld) {
+            accountIdsToDelete.add(acct.Id);
+        }
+        
+        List<Case> relatedCases = [
+            SELECT Id, CaseNumber, Status, Origin, AccountId
+            FROM Case 
+            WHERE AccountId IN :accountIdsToDelete
+            AND Status != 'Closed'
+        ];
+        
+        if(!relatedCases.isEmpty()) {
+            System.debug('Warning: Deleting ' + accountIdsToDelete.size() + 
+                        ' accounts with ' + relatedCases.size() + ' open cases');
+            
+            // SOQL Query Example 6: Query Account with all related activities
+            List<Account> accountsWithActivities = [
+                SELECT Id, Name, 
+                       (SELECT Id, Subject, ActivityDate FROM Tasks WHERE IsClosed = false),
+                       (SELECT Id, Subject, ActivityDate FROM Events WHERE ActivityDateTime >= TODAY)
+                FROM Account 
+                WHERE Id IN :accountIdsToDelete
+            ];
+            
+            for(Account acct : accountsWithActivities) {
+                System.debug('Account ' + acct.Name + 
+                            ' has ' + acct.Tasks.size() + ' open tasks and ' + 
+                            acct.Events.size() + ' upcoming events');
+            }
         }
     }
 
