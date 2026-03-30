@@ -360,7 +360,7 @@ public with sharing class SOQLRecipes {
             FROM Account 
             WHERE Industry != null
             GROUP BY Industry
-            ORDER BY acctCount DESC
+            ORDER BY COUNT(Id) DESC
         ];
         results.addAll(acctByIndustry);
         
@@ -368,7 +368,7 @@ public with sharing class SOQLRecipes {
             SELECT StageName, COUNT(Id) stageCount, SUM(Amount) totalAmount
             FROM Opportunity 
             GROUP BY StageName
-            ORDER BY totalAmount DESC
+            ORDER BY SUM(Amount) DESC
         ];
         results.addAll(oppByStage);
         

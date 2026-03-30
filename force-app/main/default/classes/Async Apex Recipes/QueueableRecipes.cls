@@ -123,14 +123,14 @@ public with sharing class QueueableRecipes implements Queueable {
             FROM Account 
             WHERE Industry != null
             GROUP BY Industry
-            ORDER BY acctCount DESC
+            ORDER BY COUNT(Id) DESC
         ];
         
         AggregateResult[] oppStats = [
             SELECT StageName, COUNT(Id) stageCount, SUM(Amount) totalAmount
             FROM Opportunity 
             GROUP BY StageName
-            ORDER BY totalAmount DESC
+            ORDER BY SUM(Amount) DESC
         ];
         
         AggregateResult[] contactStats = [
