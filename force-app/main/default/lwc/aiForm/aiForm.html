@@ -1,0 +1,40 @@
+<template>
+    <lightning-card title="AI Form Automation">
+        <div class="slds-p-around_medium">
+            <div class="slds-text-heading_medium slds-m-bottom_small">
+                AI Form Automation System
+            </div>
+            
+            <div class="slds-form-element">
+                <label class="slds-form-element__label">Form Description</label>
+                <div class="slds-form-element__control">
+                    <lightning-textarea
+                        placeholder="Describe the form you want to automate..."
+                        value={formDescription}
+                        onchange={handleFormDescriptionChange}>
+                    </lightning-textarea>
+                </div>
+            </div>
+
+            <div class="slds-form-element slds-m-top_medium">
+                <label class="slds-form-element__label">Form Data (JSON)</label>
+                <div class="slds-form-element__control">
+                    <lightning-textarea
+                        placeholder="Enter JSON data (e.g., {&quot;firstName&quot;:&quot;John&quot;,&quot;lastName&quot;:&quot;Doe&quot;})"
+                        value={formData}
+                        onchange={handleFormDataChange}>
+                    </lightning-textarea>
+                </div>
+            </div>
+
+            <div class="slds-m-top_medium">
+                <lightning-button
+                    variant="brand"
+                    label="Generate Steps"
+                    onclick={handleGenerateSteps}
+                    disabled="{!isValidGenerateInput}">
+                </lightning-button>
+            </div>
+        </div>
+    </lightning-card>
+</template>
