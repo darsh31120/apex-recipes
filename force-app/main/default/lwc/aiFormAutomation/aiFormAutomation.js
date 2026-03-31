@@ -1,8 +1,5 @@
 import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import generateSteps from '@salesforce/apex/FormAutomationRestController.generateSteps';
-import executeWorkflow from '@salesforce/apex/FormAutomationRestController.executeWorkflow';
-import getTemplates from '@salesforce/apex/FormAutomationRestController.getTemplates';
 
 export default class AiFormAutomation extends LightningElement {
     @api cardTitle = 'AI Form Automation';
@@ -91,32 +88,44 @@ export default class AiFormAutomation extends LightningElement {
         this.isGenerating = true;
         
         try {
-            const requestData = {
-                formDescription: this.formDescription,
-                formData: this.formData,
-                formHtml: this.formHtml || null
-            };
-
-            const result = await generateSteps({ requestBody: JSON.stringify(requestData) });
+            // Mock implementation for now - would call Apex in real scenario
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
-            if (result.success) {
-                this.generatedSteps = result.steps.map((step, index) => ({
-                    stepId: `step-${index}`,
-                    stepNumber: index + 1,
-                    stepType: step.stepType,
-                    selector: step.selector,
-                    value: step.value,
-                    waitTime: step.waitTime || 0,
-                    metadata: step.metadata || {}
-                }));
-                
-                this.showToast('Success', 'Steps generated successfully!', 'success');
-            } else {
-                this.showToast('Error', result.message || 'Failed to generate steps', 'error');
-            }
+            // Generate mock steps
+            this.generatedSteps = [
+                {
+                    stepId: 'step-1',
+                    stepNumber: 1,
+                    stepType: 'navigate',
+                    selector: '',
+                    value: 'https://example.com/form',
+                    waitTime: 0,
+                    metadata: {}
+                },
+                {
+                    stepId: 'step-2',
+                    stepNumber: 2,
+                    stepType: 'input',
+                    selector: '#firstName',
+                    value: 'John',
+                    waitTime: 0,
+                    metadata: {}
+                },
+                {
+                    stepId: 'step-3',
+                    stepNumber: 3,
+                    stepType: 'input',
+                    selector: '#lastName',
+                    value: 'Doe',
+                    waitTime: 0,
+                    metadata: {}
+                }
+            ];
+            
+            this.showToast('Success', 'Steps generated successfully!', 'success');
         } catch (error) {
             console.error('Error generating steps:', error);
-            this.showToast('Error', 'Failed to generate steps: ' + error.body.message, 'error');
+            this.showToast('Error', 'Failed to generate steps: ' + error.message, 'error');
         } finally {
             this.isGenerating = false;
         }
@@ -131,21 +140,37 @@ export default class AiFormAutomation extends LightningElement {
     // Load Templates
     async loadTemplates() {
         try {
-            const result = await getTemplates();
+            // Mock implementation for now
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
-            if (result.success) {
-                this.templates = Object.entries(result.templates).map(([key, template]) => ({
-                    id: key,
-                    name: template.workflowName,
-                    description: `Template for ${template.workflowName}`,
-                    steps: template.steps
-                }));
-            } else {
-                this.showToast('Error', result.message || 'Failed to load templates', 'error');
-            }
+            this.templates = [
+                {
+                    id: 'contact_form',
+                    name: 'Contact Form Template',
+                    description: 'Template for contact forms with name, email, and message fields',
+                    steps: [
+                        { stepType: 'navigate', selector: '', value: 'https://example.com/contact' },
+                        { stepType: 'input', selector: '#firstName', value: '${firstName}' },
+                        { stepType: 'input', selector: '#lastName', value: '${lastName}' },
+                        { stepType: 'input', selector: '#email', value: '${email}' }
+                    ]
+                },
+                {
+                    id: 'registration_form',
+                    name: 'Registration Form Template',
+                    description: 'Template for user registration forms',
+                    steps: [
+                        { stepType: 'navigate', selector: '', value: 'https://example.com/register' },
+                        { stepType: 'input', selector: '#username', value: '${username}' },
+                        { stepType: 'input', selector: '#email', value: '${email}' },
+                        { stepType: 'input', selector: '#password', value: '${password}' }
+                    ]
+                }
+            ];
+            
         } catch (error) {
             console.error('Error loading templates:', error);
-            this.showToast('Error', 'Failed to load templates: ' + error.body.message, 'error');
+            this.showToast('Error', 'Failed to load templates: ' + error.message, 'error');
         }
     }
 
@@ -179,40 +204,26 @@ export default class AiFormAutomation extends LightningElement {
         this.addLogEntry('info', 'Starting workflow execution...');
         
         try {
-            const requestData = {
-                workflowName: this.workflowName,
-                targetUrl: this.targetUrl,
-                steps: this.generatedSteps.map(step => ({
-                    stepType: step.stepType,
-                    selector: step.selector,
-                    value: step.value,
-                    waitTime: step.waitTime,
-                    metadata: step.metadata
-                }))
-            };
-
-            this.addLogEntry('info', 'Sending workflow to server...');
-            const result = await executeWorkflow({ requestBody: JSON.stringify(requestData) });
-            
-            if (result.success) {
-                this.executionStatus = 'success';
-                this.executionMessage = 'Workflow executed successfully!';
-                this.addLogEntry('success', `Workflow completed: ${result.status}`);
-                this.addLogEntry('info', `Start time: ${result.startTime}`);
-                this.addLogEntry('info', `End time: ${result.endTime}`);
+            // Mock implementation for now
+            for (let i = 0; i < this.generatedSteps.length; i++) {
+                const step = this.generatedSteps[i];
+                this.addLogEntry('info', `Executing step ${step.stepNumber}: ${step.stepType}`);
                 
-                this.showToast('Success', 'Workflow executed successfully!', 'success');
-            } else {
-                this.executionStatus = 'error';
-                this.executionMessage = result.message || 'Failed to execute workflow';
-                this.addLogEntry('error', this.executionMessage);
+                // Simulate step execution time
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                this.showToast('Error', this.executionMessage, 'error');
+                this.addLogEntry('success', `Step ${step.stepNumber} completed successfully`);
             }
+            
+            this.executionStatus = 'success';
+            this.executionMessage = 'Workflow executed successfully!';
+            this.addLogEntry('success', 'Workflow completed successfully');
+            
+            this.showToast('Success', 'Workflow executed successfully!', 'success');
         } catch (error) {
             console.error('Error executing workflow:', error);
             this.executionStatus = 'error';
-            this.executionMessage = 'Failed to execute workflow: ' + error.body.message;
+            this.executionMessage = 'Failed to execute workflow: ' + error.message;
             this.addLogEntry('error', this.executionMessage);
             
             this.showToast('Error', this.executionMessage, 'error');

@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
-    <apiVersion>58.0</apiVersion>
+    <apiVersion>62.0</apiVersion>
     <isExposed>true</isExposed>
+    <masterLabel>AI Form Automation</masterLabel>
+    <description>AI-powered form automation system for generating and executing form filling workflows</description>
     <targets>
         <target>lightning__RecordPage</target>
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>
         <target>lightningCommunity__Page</target>
+        <target>lightning__Tab</target>
     </targets>
     <targetConfigs>
-        <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage">
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage,lightningCommunity__Page,lightning__Tab">
             <property name="title" type="String" default="AI Form Automation" label="Component Title" description="Title displayed for the component"/>
+            <property name="showTemplates" type="Boolean" default="true" label="Show Templates Tab" description="Display the templates tab in the component"/>
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>
