@@ -70,12 +70,12 @@
             </div>
 
             <!-- Generated Steps Section -->
-            <div class="slds-box slds-box_x-small slds-m-bottom_medium" if:true={generatedSteps.length}>
+            <div class="slds-box slds-box_x-small slds-m-bottom_medium" if:true={generatedsteps.length}>
                 <div class="slds-text-heading_small slds-m-bottom_small">
                     Generated Steps (Including Save Step)
                 </div>
                 
-                <template for:step in generatedSteps>
+                <template for:step in generatedsteps>
                     <div key={step.stepId} class="slds-box slds-box_x-small slds-m-bottom_x-small">
                         <div class="slds-grid slds-wrap">
                             <div class="slds-col slds-size_1-of-12">
@@ -91,8 +91,8 @@
                                 <span>{step.value}</span>
                             </div>
                             <div class="slds-col slds-size_2-of-12">
-                                <lightning-badge label={step.stepType === 'click' && step.selector === '#saveButton' ? 'Save Action' : 'Regular Step'} 
-                                    variant={step.stepType === 'click' && step.selector === '#saveButton' ? 'success' : 'neutral'}>
+                                <lightning-badge label="{step.stepType === 'click' && step.selector === '#saveButton' ? 'Save Action' : 'Regular Step'}" 
+                                    variant="{step.stepType === 'click' && step.selector === '#saveButton' ? 'success' : 'neutral'}">
                                 </lightning-badge>
                             </div>
                         </div>
@@ -101,12 +101,12 @@
             </div>
 
             <!-- Saved Workflows Section -->
-            <div class="slds-box slds-box_x-small" if:true={savedWorkflows.length}>
+            <div class="slds-box slds-box_x-small" if:true={savedworkflows.length}>
                 <div class="slds-text-heading_small slds-m-bottom_small">
                     Saved Workflows
                 </div>
                 
-                <template for:workflow in savedWorkflows>
+                <template for:workflow in savedworkflows>
                     <div key={workflow.id} class="slds-box slds-box_x-small slds-m-bottom_x-small">
                         <div class="slds-grid slds-wrap">
                             <div class="slds-col slds-size_4-of-12">
@@ -140,7 +140,7 @@
             </div>
 
             <!-- Empty State -->
-            <div class="slds-text-align_center slds-p-around_large" if:false={savedWorkflows.length}>
+            <div class="slds-text-align_center slds-p-around_large" if:false={savedworkflows.length}>
                 <div class="slds-text-heading_small slds-text-color_weak">
                     No saved workflows yet. Generate and save your first workflow!
                 </div>
