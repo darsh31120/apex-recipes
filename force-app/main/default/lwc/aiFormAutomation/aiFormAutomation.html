@@ -1,0 +1,215 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="custom:custom18">
+        <div class="slds-p-around_medium">
+            <!-- Tab Navigation -->
+            <lightning-tabset variant="scoped">
+                <lightning-tab label="Generate Steps" onactive={handleGenerateTabActive}>
+                    <div class="slds-p-around_medium">
+                        <!-- Form Description -->
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="form-description">Form Description</label>
+                            <div class="slds-form-element__control">
+                                <lightning-textarea
+                                    field-level-help="Describe the form you want to automate"
+                                    placeholder="e.g., Contact form with fields for first name, last name, email, and message"
+                                    value={formDescription}
+                                    onchange={handleFormDescriptionChange}
+                                    class="slds-textarea_height-medium">
+                                </lightning-textarea>
+                            </div>
+                        </div>
+
+                        <!-- Form Data -->
+                        <div class="slds-form-element slds-m-top_medium">
+                            <label class="slds-form-element__label" for="form-data">Form Data (JSON)</label>
+                            <div class="slds-form-element__control">
+                                <lightning-textarea
+                                    field-level-help="JSON data to fill in the form"
+                                    placeholder='{"firstName":"John","lastName":"Doe","email":"john@example.com","message":"Hello World"}'
+                                    value={formData}
+                                    onchange={handleFormDataChange}
+                                    class="slds-textarea_height-medium">
+                                </lightning-textarea>
+                            </div>
+                        </div>
+
+                        <!-- Form HTML (Optional) -->
+                        <div class="slds-form-element slds-m-top_medium">
+                            <label class="slds-form-element__label" for="form-html">Form HTML (Optional)</label>
+                            <div class="slds-form-element__control">
+                                <lightning-textarea
+                                    field-level-help="Optional: Include the HTML of the form for better analysis"
+                                    placeholder="Paste the HTML structure of the form here..."
+                                    value={formHtml}
+                                    onchange={handleFormHtmlChange}
+                                    class="slds-textarea_height-small">
+                                </lightning-textarea>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="slds-m-top_large">
+                            <lightning-button
+                                variant="brand"
+                                label="Generate AI Steps"
+                                onclick={handleGenerateSteps}
+                                isLoading={isGenerating}
+                                disabled={!isValidGenerateInput}>
+                            </lightning-button>
+                        </div>
+
+                        <!-- Generated Steps -->
+                        <div class="slds-m-top_large">
+                            <template if:true={generatedSteps.length}>
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Generated Steps:</h3>
+                                <div class="steps-container">
+                                    <template for:step in generatedSteps>
+                                        <div key={step.stepId} class="slds-box slds-box_x-small slds-m-bottom_x-small">
+                                            <div class="slds-grid slds-wrap">
+                                                <div class="slds-col slds-size_1-of-12">
+                                                    <span class="step-number">{step.stepNumber}</span>
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-12">
+                                                    <span class="step-type">{step.stepType}</span>
+                                                </div>
+                                                <div class="slds-col slds-size_3-of-12">
+                                                    <span class="step-selector">{step.selector}</span>
+                                                </div>
+                                                <div class="slds-col slds-size_4-of-12">
+                                                    <span class="step-value">{step.value}</span>
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-12">
+                                                    <lightning-button-icon
+                                                        icon-name="utility:delete"
+                                                        alternative-text="Delete step"
+                                                        size="small"
+                                                        onclick={handleDeleteStep}
+                                                        data-step-id={step.stepId}>
+                                                    </lightning-button-icon>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </lightning-tab>
+
+                <lightning-tab label="Templates" onactive={handleTemplatesTabActive}>
+                    <div class="slds-p-around_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Available Templates:</h3>
+                        
+                        <template if:true={templates.length}>
+                            <div class="template-grid">
+                                <template for:template in templates>
+                                    <div key={template.id} class="slds-box slds-box_x-small slds-m-bottom_small template-card">
+                                        <div class="slds-grid slds-wrap">
+                                            <div class="slds-col slds-size_1-of-1">
+                                                <h4 class="slds-text-heading_medium">{template.name}</h4>
+                                                <p class="slds-text-body_small">{template.description}</p>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                                <lightning-button
+                                                    variant="neutral"
+                                                    label="Use Template"
+                                                    size="small"
+                                                    onclick={handleUseTemplate}
+                                                    data-template-id={template.id}>
+                                                </lightning-button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template if:false={templates.length}>
+                            <div class="slds-text-align_center slds-p-around_large">
+                                <lightning-spinner
+                                    alternative-text="Loading templates..."
+                                    size="medium">
+                                </lightning-spinner>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <lightning-tab label="Execute" onactive={handleExecuteTabActive}>
+                    <div class="slds-p-around_medium">
+                        <!-- Target URL -->
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="target-url">Target URL</label>
+                            <div class="slds-form-element__control">
+                                <lightning-input
+                                    type="url"
+                                    placeholder="https://example.com/form"
+                                    value={targetUrl}
+                                    onchange={handleTargetUrlChange}>
+                                </lightning-input>
+                            </div>
+                        </div>
+
+                        <!-- Workflow Name -->
+                        <div class="slds-form-element slds-m-top_medium">
+                            <label class="slds-form-element__label" for="workflow-name">Workflow Name</label>
+                            <div class="slds-form-element__control">
+                                <lightning-input
+                                    type="text"
+                                    placeholder="My Form Automation Workflow"
+                                    value={workflowName}
+                                    onchange={handleWorkflowNameChange}>
+                                </lightning-input>
+                            </div>
+                        </div>
+
+                        <!-- Execution Status -->
+                        <template if:true={executionStatus}>
+                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-m-top_medium" 
+                                 class={executionStatusClass}>
+                                <span class="slds-assistive-text">{executionStatus}</span>
+                                <lightning-icon icon-name={executionIcon} size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                <span class="slds-text-body_small">{executionMessage}</span>
+                            </div>
+                        </template>
+
+                        <!-- Execute Button -->
+                        <div class="slds-m-top_large">
+                            <lightning-button
+                                variant="brand"
+                                label="Execute Workflow"
+                                onclick={handleExecuteWorkflow}
+                                isLoading={isExecuting}
+                                disabled={!isValidExecuteInput}>
+                            </lightning-button>
+                        </div>
+
+                        <!-- Execution Log -->
+                        <template if:true={executionLog.length}>
+                            <div class="slds-m-top_large">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Execution Log:</h3>
+                                <div class="log-container">
+                                    <template for:logEntry in executionLog>
+                                        <div key={logEntry.id} class="slds-box slds-box_x-small slds-m-bottom_x-small">
+                                            <div class="slds-grid slds-wrap">
+                                                <div class="slds-col slds-size_2-of-12">
+                                                    <span class="log-time">{logEntry.timestamp}</span>
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-12">
+                                                    <span class="log-type">{logEntry.type}</span>
+                                                </div>
+                                                <div class="slds-col slds-size_8-of-12">
+                                                    <span class="log-message">{logEntry.message}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+            </lightning-tabset>
+        </div>
+    </lightning-card>
+</template>
