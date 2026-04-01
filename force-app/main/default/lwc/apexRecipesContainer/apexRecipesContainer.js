@@ -6,4 +6,9 @@ export default class ApexRecipesContainer extends LightningElement {
     handleRecipeSelect(event) {
         this.selectedRecipe = event.detail;
     }
+
+    handleGenerateQuote() {
+        // Placeholder for quote generation logic
+        console.log('Generate Quote button clicked');
+    }
 }
