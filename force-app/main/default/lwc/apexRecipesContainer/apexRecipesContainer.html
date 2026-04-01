@@ -15,5 +15,19 @@
         <div class="slds-card__footer">
             <lightning-button label="Generate Quote" onclick={handleGenerateQuote}></lightning-button>
         </div>
+        <div class="slds-card__body slds-p-around_medium">
+            <template if:true={quoteGenerated}>
+                <div class="slds-box slds-box_x-small slds-text-align_center slds-m-around_small">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Generated Quote</h3>
+                    <p class="slds-text-body_regular">{quoteText}</p>
+                    <p class="slds-text-title slds-m-top_small">— {quoteAuthor}</p>
+                </div>
+            </template>
+            <template if:false={quoteGenerated}>
+                <div class="slds-text-align_center slds-text-color_weak">
+                    Click "Generate Quote" to display a random quote
+                </div>
+            </template>
+        </div>
     </article>
 </template>
