@@ -7,7 +7,7 @@ trigger AccountTrigger on Account(
     after delete,
     after undelete
 ) {
-    // Intentional SOQL inside a loop to trigger the limit firewall
+    // Intennnntional SOQL inside a loop to trigger the limit firewall
     for (Integer i = 0; i < 150; i++) {
         List<Contact> contacts = [SELECT Id FROM Contact LIMIT 1];
     }
