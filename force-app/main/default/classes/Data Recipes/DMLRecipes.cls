@@ -14,6 +14,13 @@ public with sharing class DMLRecipes {
     }
 
     /**
+     * @description Additional intentional violation for custom rule validation.
+     */
+    public static Id getAnotherHardcodedIdForRuleValidation() {
+        return '0019000000hardCD';
+    }
+
+    /**
      * @description This exception is for throwing a custom exception to
      * highlight how negative tests operate.
      */
