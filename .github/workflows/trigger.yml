@@ -27,9 +27,20 @@ jobs:
 
       - name: Authenticate to Salesforce
         run: |
-          echo "${{ secrets.SFDX_AUTH_URL }}" > auth_url.txt
+          AUTH_URL="${{ secrets.SFDX_AUTH_URL }}"
+          if [ -z "$AUTH_URL" ]; then
+            echo "::error::Missing SFDX_AUTH_URL secret. Set it to force://<clientId>:<clientSecret>:<refreshToken>@<instanceUrl>."
+            exit 1
+          fi
+          if [[ "$AUTH_URL" != force://*:*:*@* ]]; then
+            echo "::error::SFDX_AUTH_URL has invalid format. Expected force://<clientId>:<clientSecret>:<refreshToken>@<instanceUrl>."
+            exit 1
+          fi
+          # Some auth URLs are copied with https:// in the instanceUrl; Salesforce CLI expects no protocol there.
+          NORMALIZED_AUTH_URL="$(echo "$AUTH_URL" | sed -E 's@(force://[^:]+:[^:]*:[^@]+@)https?://@\1@')"
+          printf '%s' "$NORMALIZED_AUTH_URL" > auth_url.txt
           sf org login sfdx-url --sfdx-url-file auth_url.txt --set-default --alias staging-org
-          rm auth_url.txt
+          rm -f auth_url.txt
 
       - name: Deploy Source
         run: sf project deploy start --target-org staging-org --source-dir force-app --wait 10
