@@ -1,0 +1,8 @@
+rules:
+  - id: ban-hardcoded-ids
+    severity: CRITICAL
+    message: "You are not allowed to use hardcoded Salesforce IDs (like 0018000000xyz) in Apex. You must query them dynamically."
+    
+  - id: require-parallel-tests
+    severity: HIGH
+    message: "All Apex test classes must include @isTest(isParallel=true) to speed up our CI/CD pipeline."

@@ -6,6 +6,14 @@
  */
 public with sharing class DMLRecipes {
     /**
+     * @description Intentional example for policy-rule validation in PR checks.
+     * This method uses a hardcoded Salesforce ID and should be flagged by custom rules.
+     */
+    public static Id getHardcodedAccountIdForRuleValidation() {
+        return '0018000000xyzABC';
+    }
+
+    /**
      * @description This exception is for throwing a custom exception to
      * highlight how negative tests operate.
      */

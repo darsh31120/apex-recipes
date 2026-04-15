@@ -38,4 +38,10 @@ private class MetadataTriggerService_Tests {
             'executing this method in a unit test should result in an exception'
         );
     }
+
+    @isTest
+    static void testRuleValidationMarker() {
+        // Intentional marker test to include this class in PR diff for custom rule checks.
+        System.Assert.isTrue(true, 'Rule validation marker');
+    }
 }
