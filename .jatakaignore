@@ -9,3 +9,4 @@ force-app/tests/**
 force-app/main/default/classes/Data Recipes/DMLRecipes.cls
 force-app/main/default/triggers/AccountHealerTestTrigger.trigger
 **/JatakaIgnoreTest.cls
+**/JatakaIgnoreTest.cls-meta.xml
