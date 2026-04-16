@@ -5,7 +5,6 @@
  * @group Data Recipes
  */
 public with sharing class DMLRecipes {
-    // Test marker for .jatakaignore validation on non-ignored source paths.
     /**
      * @description Intentional example for policy-rule validation in PR checks.
      * This method uses a hardcoded Salesforce ID and should be flagged by custom rules.
