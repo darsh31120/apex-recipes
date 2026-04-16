@@ -1,5 +1,6 @@
 @isTest
 public class DMLRecipes_Tests {
+    // Test marker for .jatakaignore validation on ignored test paths.
     @isTest
     static void testInsertInSystemModePositive() {
         Test.startTest();
