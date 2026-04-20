@@ -1,8 +1,8 @@
-@isTest
+@isTest(isParallel=true)
 private class JatakaRulesFeatureTest {
     @isTest
     static void validatesCustomRulePath() {
-        Id hardcodedAccountId = '0018000000ABCDe';
-        System.assertNotEquals(null, hardcodedAccountId);
+        Id currentUserId = UserInfo.getUserId();
+        System.assertNotEquals(null, currentUserId);
     }
 }

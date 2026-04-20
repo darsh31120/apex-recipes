@@ -1,4 +1,4 @@
-@isTest
+@isTest(isParallel=true)
 private class KamikazeBackendSmoke_Tests {
     @isTest
     static void testAddTwoNumbers() {
