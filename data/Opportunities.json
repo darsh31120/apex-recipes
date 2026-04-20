@@ -4,7 +4,7 @@
             "amount": "119373.34",
             "closedate": "2020-12-22T21:16:01Z",
             "description": "\"",
-            "name": "Cape starling",
+            "name": "Smoke Opp",
             "StageName": "Id. Decision Makers",
             "attributes": {
                 "type": "Opportunity",
@@ -16,7 +16,7 @@
             "amount": "15065.74",
             "closedate": "2021-01-19T00:30:44Z",
             "description": "-1E02",
-            "name": "Pelican, great white",
+            "name": "Smoke Opp Retry",
             "StageName": "Negotiation/Review",
             "attributes": {
                 "type": "Opportunity",
