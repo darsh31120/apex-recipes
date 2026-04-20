@@ -12,4 +12,11 @@ public with sharing class QuiddityRecipes {
     public static Quiddity demonstrateGetQuiddity() {
         return Request.getCurrent().getQuiddity();
     }
+
+    /**
+     * @description Returns the current request quiddity as a string token.
+     */
+    public static String describeCurrentRequestQuiddity() {
+        return String.valueOf(demonstrateGetQuiddity());
+    }
 }
