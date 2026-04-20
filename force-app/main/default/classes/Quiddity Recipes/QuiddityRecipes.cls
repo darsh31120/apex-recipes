@@ -12,4 +12,11 @@ public with sharing class QuiddityRecipes {
     public static Quiddity demonstrateGetQuiddity() {
         return Request.getCurrent().getQuiddity();
     }
+
+    /**
+     * @description Backend-healer probe helper for semantic diff detection.
+     */
+    public static String describeCurrentRequestQuiddity() {
+        return String.valueOf(demonstrateGetQuiddity());
+    }
 }
