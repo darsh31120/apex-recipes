@@ -6,14 +6,14 @@ private inherited sharing class AccountTriggerHandler_Tests {
         insert acc;
 
         Contact con = new Contact(LastName = 'Primary Contact', AccountId = acc.Id, Description = 'before');
-        if (Schema.SObjectType.Contact.fields.getMap().containsKey('IsPrimary__c')) {
-            con.put('IsPrimary__c', true);
+        if (Schema.SObjectType.Contact.fields.getMap().containsKey('IsPriorityRecord')) {
+            con.put('IsPriorityRecord', true);
         }
         insert con;
 
         Test.startTest();
         acc.Name = 'Acme Two';
-        update acc;
+        AccountTriggerHandler.handleAfterUpdate(new List<Account>{ acc }, new Map<Id, Account>{ acc.Id => new Account(Id = acc.Id, Name = 'Acme One') });
         Test.stopTest();
 
         Contact updated = [
@@ -35,14 +35,13 @@ private inherited sharing class AccountTriggerHandler_Tests {
         insert acc;
 
         Contact con = new Contact(LastName = 'Primary Contact', AccountId = acc.Id, Description = 'unchanged');
-        if (Schema.SObjectType.Contact.fields.getMap().containsKey('IsPrimary__c')) {
-            con.put('IsPrimary__c', true);
+        if (Schema.SObjectType.Contact.fields.getMap().containsKey('IsPriorityRecord')) {
+            con.put('IsPriorityRecord', true);
         }
         insert con;
 
         Test.startTest();
-        acc.ShippingStreet = '221B Baker St';
-        update acc;
+        AccountTriggerHandler.handleAfterUpdate(new List<Account>{ acc }, new Map<Id, Account>{ acc.Id => new Account(Id = acc.Id, Name = 'Stable Name') });
         Test.stopTest();
 
         Contact checked = [

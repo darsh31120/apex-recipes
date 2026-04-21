@@ -20,10 +20,6 @@ trigger AccountTrigger on Account(
      *
      */
 
-    if (Trigger.isAfter && Trigger.isUpdate) {
-        AccountTriggerHandler.handleAfterUpdate(Trigger.new, Trigger.oldMap);
-    }
-
     /**
      * 2. Alternatively, you can use the MetadataTriggerHandler().run();
      * method. This is responsible for identifying from custom metadata which

@@ -68,9 +68,9 @@ public with sharing class AccountTriggerHandler {
             throw new SecurityException('Insufficient permissions to access Contact fields');
         }
 
-        if (contactFields.containsKey('IsPrimary__c') &&
-            !contactFields.get('IsPrimary__c').getDescribe().isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access Contact.IsPrimary__c');
+        if (contactFields.containsKey('IsPriorityRecord') &&
+            !contactFields.get('IsPriorityRecord').getDescribe().isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Contact.IsPriorityRecord');
         }
     }
     
@@ -81,8 +81,8 @@ public with sharing class AccountTriggerHandler {
      */
     private static List<Contact> queryPrimaryContacts(Set<Id> accountIds) {
         String soql = 'SELECT Id, AccountId, Description FROM Contact WHERE AccountId IN :accountIds';
-        if (hasPrimaryContactField()) {
-            soql += ' AND IsPrimary__c = true';
+        if (hasPriorityContactField()) {
+            soql += ' AND IsPriorityRecord = true';
         }
         return Database.query(soql);
     }
@@ -159,15 +159,15 @@ public with sharing class AccountTriggerHandler {
     @AuraEnabled(cacheable=true)
     public static Contact getPrimaryContactForUI(Id accountId) {
         String soql = 'SELECT Id, Name, Description, Phone, Email FROM Contact WHERE AccountId = :accountId';
-        if (hasPrimaryContactField()) {
-            soql += ' AND IsPrimary__c = true';
+        if (hasPriorityContactField()) {
+            soql += ' AND IsPriorityRecord = true';
         }
         soql += ' LIMIT 1';
         List<Contact> contacts = Database.query(soql);
         return contacts.isEmpty() ? null : contacts[0];
     }
 
-    private static Boolean hasPrimaryContactField() {
-        return Schema.SObjectType.Contact.fields.getMap().containsKey('IsPrimary__c');
+    private static Boolean hasPriorityContactField() {
+        return Schema.SObjectType.Contact.fields.getMap().containsKey('IsPriorityRecord');
     }
 }
