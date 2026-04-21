@@ -1,285 +1,173 @@
 /**
- * @description Demonstrates how to construct a TriggerHandler using the
- * trigger handler framework found in Shared Code/TriggerHandler.cls
- * @group Trigger Recipes
- * @see TriggerHandler
- * @see AccountServiceLayer
+ * AccountTriggerHandler - Handler class for AccountTrigger
+ * 
+ * @description Handles Account trigger operations following separation of concerns pattern.
+ * All methods are bulkified and alsoo follow Apex best practices.
  */
-public with sharing class AccountTriggerHandler extends TriggerHandler {
-    private List<Account> triggerNew;
-    private List<Account> triggerOld;
-    private Map<Id, Account> triggerMapNew;
-    private Map<Id, Account> triggerMapOld;
-
-    @TestVisible
-    private static Exception circuitBreaker;
-
+public with sharing class AccountTriggerHandler {
+    // 1. MUST BE STATIC so it survives across trigger executions in the same transaction
+    private static Set<Id> processedAccountIds = new Set<Id>();
+    
     /**
-     * @description Custom exception class
+     * Handles after update logic for Account records
+     * @description Updates primary contact descriptions when Account names change.
+     * @param newRecords - New versions of Account records
+     * @param oldMap - Map of old Account records by ID
      */
-    public class AccountTriggerHandlerException extends Exception {
-    }
-
-    /**
-     * @description Constructor that sets class variables based on Trigger
-     * context vars
-     */
-    public AccountTriggerHandler() {
-        this.triggerOld = (List<Account>) Trigger.old;
-        this.triggerNew = (List<Account>) Trigger.new;
-        this.triggerMapNew = (Map<Id, Account>) Trigger.newMap;
-        this.triggerMapOld = (Map<Id, Account>) Trigger.oldMap;
-    }
-
-    // Insert Contexts
-
-    /**
-     * @description Before Insert context method. Called automatically by the
-     * trigger framework this class extends.
-     * @example
-     * ```
-     * Account[] accounts = new Account[]();
-     * accounts.add(new Account(name='example 1'));
-     * accounts.add(new Account(name='example 2'));
-     * insert accounts;
-     * ```
-     */
-    public override void beforeInsert() {
-        // Note: You don't need to put your logic directly in this method.
-        // If, for instance, you have a service layer, you can call methods on
-        // those classes here, just like this:
-        AccountServiceLayer.incrementCounterInDescription(
-            this.triggerNew,
-            false
-        );
-        /**
-         * Using this context method as a 'broker' to call other
-         * classes/methods allows you to keep your trigger logic in individual
-         * classes, keeping to the single responbility principle. It also allows
-         * you to enforce the order in which your various bits of trigger logic
-         * execute something that's not possible when you have mulitple triggers
-         * on the same object.
-         */
-    }
-
-    /**
-     * @description after insert context method. Called automatically by the
-     * trigger framework this class extends
-     * @example
-     * ```
-     * Account[] accounts = new Account[]();
-     * accounts.add(new Account(name='example 1'));
-     * accounts.add(new Account(name='example 2'));
-     * insert accounts;
-     * ```
-     */
-    public override void afterInsert() {
-        AccountServiceLayer.changeShippingStreet(
-            this.triggerNew,
-            System.AccessLevel.SYSTEM_MODE
-        );
-    }
-
-    // Update Contexts
-
-    /**
-     * @description before update context method. Called automatically by the
-     * trigger framework this class extends
-     * @example
-     * ```
-     * Account[] accounts = new Account[]();
-     * accounts.add(new Account(name='example 1'));
-     * accounts.add(new Account(name='example 2'));
-     * insert accounts;
-     * accounts[0].name += ' Updated';
-     * update accounts;
-     * ```
-     */
-    public override void beforeUpdate() {
-        // While it's often best to utilize these context methods to call other
-        // classes and methods it's entirely possible to place your trigger
-        // logic directly in this method. Especially if that logic is short.
-        for (Account acct : this.triggerNew) {
-            // You can call addError('msg') on records that fail validation.
-            // Doing so prevents them from being saved.
-            if (acct.ShippingState?.length() > 2) {
-                acct.addError('Shipping State Length exceeds maximum allowed');
+    public static void handleAfterUpdate(List<Account> newRecords, Map<Id, Account> oldMap) {
+        
+        // 2. Filter out records that have already been processed
+        List<Account> unprocessedAccounts = new List<Account>();
+        for(Account acc : newRecords) {
+            if(!processedAccountIds.contains(acc.Id)) {
+                unprocessedAccounts.add(acc);
+                // 3. CRITICAL: Lock the ID immediately, BEFORE any DML happens!
+                processedAccountIds.add(acc.Id); 
             }
-            acct.ShippingStreet += ' before update trigger';
         }
-        // Remember, because this is a before context trigger, we don't need to
-        // DML these records.
+        // If all accounts were already processed, break the loop and stop executing.
+        if(unprocessedAccounts.isEmpty()) {
+            return;
+        }
+        // 4. Proceed with your logic ONLY using the unprocessed accounts
+        Set<Id> accountIds = collectAccountIds(unprocessedAccounts);
+        validateContactReadAccess();
+        
+        List<Contact> contacts = queryPrimaryContacts(accountIds);
+        List<Contact> toUpdate = findContactsToUpdate(contacts, unprocessedAccounts, oldMap);
+        
+        validateContactUpdateAccess();
+        
+        // Because we locked the IDs above, when this DML fires and potentially 
+        // triggers cross-object flows that come back to Account, the trigger will exit early.
+        updateContacts(toUpdate); 
     }
-
+    
     /**
-     * @description after update context method. Called automatically by the
-     * trigger framework this class extends
-     *
-     * Note: this method contains a PMD false-positive report about CRUD
-     * checking before insert. However, trigger code is run in system mode,
-     * regardless of users, so it doesn't make sense to check for Account and
-     * Task permissions. This code is therefore only safe to execute in the
-     * context of a trigger.
-     * @example
-     * ```
-     * Account[] accounts = new Account[]();
-     * accounts.add(new Account(name='example 1'));
-     * accounts.add(new Account(name='example 2'));
-     * insert accounts;
-     * accounts[0].name += ' Updated';
-     * update accounts;
-     * ```
+     * @description Collects Account IDs from the trigger records
+     * @param newRecords - List of Account records
+     * @return Set of Account IDs
      */
-    @SuppressWarnings('PMD.ApexCRUDViolation')
-    public override void afterUpdate() {
-        List<Task> newTasks = new List<Task>();
-        for (Account acct : this.triggerNew) {
-            Task tsk = new Task(
-                WhatId = acct.Id,
-                Subject = 'Account was updated, please verify'
-            );
-            newTasks.add(tsk);
+    private static Set<Id> collectAccountIds(List<Account> newRecords) {
+        Set<Id> accountIds = new Set<Id>();
+        for (Account acc : newRecords) {
+            accountIds.add(acc.Id);
+        }
+        return accountIds;
+    }
+    
+    /**
+     * @description Validates read access to Contact object and fields
+     */
+    private static void validateContactReadAccess() {
+        Map<String, Schema.SObjectField> contactFields = Schema.SObjectType.Contact.fields.getMap();
+        if (!Schema.sObjectType.Contact.isAccessible() || 
+            !contactFields.get('Id').getDescribe().isAccessible() ||
+            !contactFields.get('AccountId').getDescribe().isAccessible() ||
+            !contactFields.get('Description').getDescribe().isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Contact fields');
         }
 
-        try {
-            if (
-                Test.isRunningTest() &&
-                AccountTriggerHandler.circuitBreaker != null
-            ) {
-                throw AccountTriggerHandler.circuitBreaker;
+        if (contactFields.containsKey('IsPrimary__c') &&
+            !contactFields.get('IsPrimary__c').getDescribe().isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Contact.IsPrimary__c');
+        }
+    }
+    
+    /**
+     * @description Queries primary contacts for the given Account IDs
+     * @param accountIds - Set of Account IDs to query contacts for
+     * @return List of primary contacts
+     */
+    private static List<Contact> queryPrimaryContacts(Set<Id> accountIds) {
+        String soql = 'SELECT Id, AccountId, Description FROM Contact WHERE AccountId IN :accountIds';
+        if (hasPrimaryContactField()) {
+            soql += ' AND IsPrimary__c = true';
+        }
+        return Database.query(soql);
+    }
+    
+    /**
+     * @description Finds contacts that need to be updated based on Account name changes
+     * @param contacts - List of contacts to check
+     * @param newRecords - New versions of Account records
+     * @param oldMap - Map of old Account records by ID
+     * @return List of contacts to update
+     */
+    private static List<Contact> findContactsToUpdate(List<Contact> contacts, List<Account> newRecords, Map<Id, Account> oldMap) {
+        // Convert List to Map for O(1) lookups
+        Map<Id, Account> newMap = new Map<Id, Account>(newRecords);
+        List<Contact> toUpdate = new List<Contact>();
+        
+        for (Contact con : contacts) {
+            Account newAcc = newMap.get(con.AccountId);
+            Account oldAcc = oldMap.get(con.AccountId);
+            
+            if (shouldUpdateContact(oldAcc, newAcc)) {
+                // Changing the string format slightly to test the logic change
+                toUpdate.add(createUpdatedContact(con.Id, newAcc.Name + ' (Auto-Synced)'));
             }
-            insert newTasks;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting Tasks for newly updated accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
-            );
-            throw new AccountTriggerHandlerException('Failed to insert tasks');
+        }
+        return toUpdate;
+    }
+    
+    /**
+     * @description Determines if a contact should be updated based on Account name change
+     * @param oldAcc - Old Account record
+     * @param newAcc - New Account record
+     * @return True if contact should be updated
+     */
+    private static Boolean shouldUpdateContact(Account oldAcc, Account newAcc) {
+        return newAcc != null && oldAcc.Name != newAcc.Name;
+    }
+    
+    /**
+     * @description Creates an updated Contact record
+     * @param contactId - Contact ID to update
+     * @param accountName - New Account name
+     * @return Updated Contact record
+     */
+    private static Contact createUpdatedContact(Id contactId, String accountName) {
+        return new Contact(
+            Id = contactId,
+            Description = 'Updated via Account: ' + accountName
+        );
+    }
+    
+    /**
+     * @description Validates update access is to Contact object and fields
+     */
+    private static void validateContactUpdateAccess() {
+        if (!Schema.sObjectType.Contact.isUpdateable() || 
+            !Schema.sObjectType.Contact.fields.Description.isUpdateable()) {
+            throw new SecurityException('Insufficient permissions to update Contact records');
         }
     }
-
-    // Delete Contexts
-
+    
     /**
-     * @description before delete context method. Called automatically by the
-     * trigger framework this class extends
-     *
-     * Note: this method contains a PMD false-positive report about CRUD
-     * checking before insert. However, trigger code is run in system mode,
-     * regardless of users, so it doesn't make sense to check for Account and
-     * Task permissions. This code is therefore only safe to execute in the
-     * context of a trigger.
-     *
-     * @example
-     * ```
-     * Account[] accounts = new Account[]();
-     * accounts.add(new Account(name='example 1'));
-     * insert accounts;
-     * delete accounts;
-     * ```
+     * @description Updates the list on cooooonnntacts if not empty
+     * @param toUpdate - List of contacts to update
      */
-    @SuppressWarnings('PMD.ApexCRUDViolation')
-    public override void beforeDelete() {
-        System.debug(LoggingLevel.INFO, 'Deleting an account');
-        List<Account> clonedAccounts = new List<Account>();
-        for (Account acct : this.triggerOld) {
-            clonedAccounts.add(acct.clone());
-        }
-
-        try {
-            insert clonedAccounts;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting cloned accounts failed with DML exception. Details: ' +
-                dmle.getMessage()
-            );
+    private static void updateContacts(List<Contact> toUpdate) {
+        if (!toUpdate.isEmpty()) {
+            update toUpdate;
         }
     }
-
     /**
-     * @description after delete context method. Called automatically by the
-     * trigger framework this class extends
-     *
-     * Note: this method contains a PMD false-positive report about CRUD
-     * checking before insert. However, trigger code is run in system mode,
-     * regardless of users, so it doesn't make sense to check for Account and
-     * Task permissions. This code is therefore only safe to execute in the
-     * context of a trigger.
-     *
-     * @example
-     * ```
-     * Account[] accounts = new Account[]();
-     * accounts.add(new Account(name='example 1'));
-     * insert accounts;
-     * delete accounts;
-     * ```
+     * @description Fetches the primary contact info for the Lightning Web Component
      */
-    @SuppressWarnings('PMD.ApexCRUDViolation')
-    public override void afterDelete() {
-        System.debug(LoggingLevel.INFO, 'After Delete Action');
-        List<Task> newTasks = new List<Task>();
-        for (Account acct : this.triggerOld) {
-            Task tsk = new Task(Subject = 'Account was deleted, please verify');
-            newTasks.add(tsk);
+    @AuraEnabled(cacheable=true)
+    public static Contact getPrimaryContactForUI(Id accountId) {
+        String soql = 'SELECT Id, Name, Description, Phone, Email FROM Contact WHERE AccountId = :accountId';
+        if (hasPrimaryContactField()) {
+            soql += ' AND IsPrimary__c = true';
         }
-
-        try {
-            insert newTasks;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting Tasks for deleted accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
-            );
-            throw new AccountTriggerHandlerException(
-                'Failed to insert Tasks: ' + dmle.getMessage()
-            );
-        }
+        soql += ' LIMIT 1';
+        List<Contact> contacts = Database.query(soql);
+        return contacts.isEmpty() ? null : contacts[0];
     }
 
-    // Undelete Contexts
-
-    /**
-     * @description after undelete context method. Called automatically by the
-     * trigger framework this class extends
-     *
-     * Note: this method contains a PMD false-positive report about CRUD
-     * checking before insert. However, trigger code is run in system mode,
-     * regardless of users, so it doesn't make sense to check for Account and
-     * Task permissions. This code is therefore only safe to execute in the
-     * context of a trigger.
-     *
-     * @example
-     * ```
-     * Account[] accounts = new Account[]();
-     * accounts.add(new Account(name='example 1'));
-     * insert accounts;
-     * delete accounts;
-     * undelete accounts;
-     * ```
-     */
-    @SuppressWarnings('PMD.ApexCRUDViolation')
-    public override void afterUndelete() {
-        System.debug(LoggingLevel.INFO, 'After undelete context method called');
-        List<Task> newTasks = new List<Task>();
-        for (Account acct : this.triggerNew) {
-            Task tsk = new Task(
-                WhatId = acct.Id,
-                Subject = 'Previously deleted account restored. Please verify'
-            );
-            newTasks.add(tsk);
-        }
-
-        try {
-            insert newTasks;
-        } catch (DmlException dmle) {
-            System.debug(
-                LoggingLevel.INFO,
-                'Inserting Tasks for restored accounts failed with a DML exception. Details: ' +
-                dmle.getMessage()
-            );
-        }
+    private static Boolean hasPrimaryContactField() {
+        return Schema.SObjectType.Contact.fields.getMap().containsKey('IsPrimary__c');
     }
 }

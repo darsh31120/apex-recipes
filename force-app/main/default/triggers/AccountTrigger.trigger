@@ -20,7 +20,9 @@ trigger AccountTrigger on Account(
      *
      */
 
-    new AccountTriggerHandler().run();
+    if (Trigger.isAfter && Trigger.isUpdate) {
+        AccountTriggerHandler.handleAfterUpdate(Trigger.new, Trigger.oldMap);
+    }
 
     /**
      * 2. Alternatively, you can use the MetadataTriggerHandler().run();
