@@ -20,8 +20,6 @@ trigger AccountTrigger on Account(
      *
      */
 
-    new AccountTriggerHandler().run();
-
     /**
      * 2. Alternatively, you can use the MetadataTriggerHandler().run();
      * method. This is responsible for identifying from custom metadata which
