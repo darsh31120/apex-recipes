@@ -1,0 +1,62 @@
+name: Backend Only Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  backend-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authenticate to Salesforce
+        shell: bash
+        run: |
+          AUTH_URL="${{ secrets.SFDX_AUTH_URL }}"
+          if [ -z "$AUTH_URL" ]; then
+            echo "::error::Missing SFDX_AUTH_URL secret."
+            exit 1
+          fi
+          if [[ "$AUTH_URL" != force://*:*:*@* ]]; then
+            echo "::error::SFDX_AUTH_URL has invalid format. Expected force://<clientId>:<clientSecret>:<refreshToken>@<instanceUrl>."
+            exit 1
+          fi
+          NORMALIZED_AUTH_URL="$(echo "$AUTH_URL" | sed -E 's@(force://[^:]+:[^:]*:[^@]+@)https?://@\1@')"
+          printf '%s' "$NORMALIZED_AUTH_URL" > auth_url.txt
+          sf org login sfdx-url --sfdx-url-file auth_url.txt --set-default --alias staging-org
+          rm -f auth_url.txt
+
+      - name: Deploy Backend Metadata
+        run: sf project deploy start --target-org staging-org --source-dir force-app --test-level NoTestRun --wait 20
+
+      - name: Assign Permission Set
+        shell: bash
+        run: |
+          output=$(sf org assign permset -n Apex_Recipes --target-org staging-org 2>&1) && {
+            echo "$output"
+            exit 0
+          }
+          echo "$output"
+          if echo "$output" | grep -q "Duplicate PermissionSetAssignment"; then
+            echo "Permission set already assigned; continuing."
+            exit 0
+          fi
+          exit 1
+
+      - name: Run Apex Backend Tests
+        run: sf apex test run --target-org staging-org -c -r human -d ./tests/apex -w 30
