@@ -1,0 +1,12 @@
+# Ignore test-only Apex files in PR analysis.
+force-app/tests/**
+
+# Ignore docs and CI metadata.
+**/*.md
+.github/**
+
+# Ignore known architecture review fixtures for CI ignore-feature validation.
+force-app/main/default/classes/Data Recipes/DMLRecipes.cls
+force-app/main/default/triggers/AccountHealerTestTrigger.trigger
+**/JatakaIgnoreTest.cls
+**/JatakaIgnoreTest.cls-meta.xml
