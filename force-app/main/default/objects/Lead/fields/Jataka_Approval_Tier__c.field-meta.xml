@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-  <fullName>Jataka_Status__c</fullName>
-  <label>Jataka Status</label>
+  <fullName>Jataka_Approval_Tier__c</fullName>
+  <label>Jataka Approval Tier</label>
   <required>true</required>
   <trackFeedHistory>false</trackFeedHistory>
   <type>Picklist</type>
@@ -10,19 +10,19 @@
     <valueSetDefinition>
       <sorted>false</sorted>
       <value>
-        <fullName>New</fullName>
+        <fullName>Bronze</fullName>
         <default>true</default>
-        <label>New</label>
+        <label>Bronze</label>
       </value>
       <value>
-        <fullName>Contacted</fullName>
+        <fullName>Silver</fullName>
         <default>false</default>
-        <label>Contacted</label>
+        <label>Silver</label>
       </value>
       <value>
-        <fullName>Disqualified</fullName>
+        <fullName>Gold</fullName>
         <default>false</default>
-        <label>Disqualified</label>
+        <label>Gold</label>
       </value>
     </valueSetDefinition>
   </valueSet>
