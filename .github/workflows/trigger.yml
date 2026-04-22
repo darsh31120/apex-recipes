@@ -37,7 +37,7 @@ jobs:
             exit 1
           fi
           # Some auth URLs are copied with https:// in the instanceUrl; Salesforce CLI expects no protocol there.
-          NORMALIZED_AUTH_URL="$(echo "$AUTH_URL" | sed -E 's@(force://[^:]+:[^:]*:[^@]+@)https?://@\1@')"
+          NORMALIZED_AUTH_URL="$(printf '%s' "$AUTH_URL" | sed -E 's#(force://[^:]+:[^:]*:[^@]+@)https?://#\1#')"
           printf '%s' "$NORMALIZED_AUTH_URL" > auth_url.txt
           sf org login sfdx-url --sfdx-url-file auth_url.txt --set-default --alias staging-org
           rm -f auth_url.txt
