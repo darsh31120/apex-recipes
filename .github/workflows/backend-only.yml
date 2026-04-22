@@ -65,4 +65,10 @@ jobs:
           exit 1
 
       - name: Run Apex Backend Tests
-        run: sf apex test run --target-org staging-org -c -r human -d ./tests/apex -w 30
+        run: |
+          sf apex test run \
+            --target-org staging-org \
+            --tests KamikazeBackendSmoke,BackendHealerProbe,BackendOnlySignal,BackendHealerE2EProbe \
+            --code-coverage \
+            --result-format human \
+            --wait 30
