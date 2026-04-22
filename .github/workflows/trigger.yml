@@ -26,10 +26,16 @@ jobs:
         run: npm install --global @salesforce/cli
 
       - name: Authenticate to Salesforce
+        shell: bash
         run: |
-          AUTH_URL="${{ secrets.SFDX_AUTH_URL }}"
+          AUTH_URL_RAW="${{ secrets.SFDX_AUTH_URL }}"
+          AUTH_URL="$(printf '%s' "$AUTH_URL_RAW" | tr -d '\r\n')"
+          AUTH_URL="${AUTH_URL#\"}"
+          AUTH_URL="${AUTH_URL%\"}"
+          AUTH_URL="${AUTH_URL#\'}"
+          AUTH_URL="${AUTH_URL%\'}"
           if [ -z "$AUTH_URL" ]; then
-            echo "::error::Missing SFDX_AUTH_URL secret. Set it to force://<clientId>:<clientSecret>:<refreshToken>@<instanceUrl>."
+            echo "::error::Missing SFDX_AUTH_URL secret. Ensure it is defined for this repository/workflow context."
             exit 1
           fi
           if [[ "$AUTH_URL" != force://*:*:*@* ]]; then
@@ -37,7 +43,8 @@ jobs:
             exit 1
           fi
           # Some auth URLs are copied with https:// in the instanceUrl; Salesforce CLI expects no protocol there.
-          NORMALIZED_AUTH_URL="$(printf '%s' "$AUTH_URL" | sed -E 's#(force://[^:]+:[^:]*:[^@]+@)https?://#\1#')"
+          NORMALIZED_AUTH_URL="${AUTH_URL/@https:\/\//@}"
+          NORMALIZED_AUTH_URL="${NORMALIZED_AUTH_URL/@http:\/\//@}"
           printf '%s' "$NORMALIZED_AUTH_URL" > auth_url.txt
           sf org login sfdx-url --sfdx-url-file auth_url.txt --set-default --alias staging-org
           rm -f auth_url.txt
