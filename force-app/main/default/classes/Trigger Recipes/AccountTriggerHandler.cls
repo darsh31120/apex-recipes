@@ -45,21 +45,32 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * ```
      */
     public override void beforeInsert() {
-        // Note: You don't need to put your logic directly in this method.
-        // If, for instance, you have a service layer, you can call methods on
-        // those classes here, just like this:
+        // --- JATAKA HEALER TRAP 1: The Healable Business Rule ---
+        // Goal: Reject the payload if it's missing specific data.
+        // The AI Healer must read this error message and patch the JSON payload.
+        for (Account acct : this.triggerNew) {
+            if (String.isBlank(acct.AccountNumber)) {
+                acct.addError(
+                    'JATAKA TRAP 1: AccountNumber is strictly required for new Accounts. Please provide a 5-digit number.'
+                );
+            }
+
+            // --- JATAKA HEALER TRAP 2: The Governor Limit ---
+            // Goal: If the AI sends this specific name, we trigger a 101 SOQL limit.
+            // The AI Healer must realize it CANNOT heal a LimitException and instantly abort.
+            if (acct.Name == 'Governor Limit Test') {
+                for (Integer i = 0; i < 150; i++) {
+                    // This will crash the transaction with "Too many SOQL queries: 101"
+                    List<Account> dummyList = [SELECT Id FROM Account LIMIT 1];
+                }
+            }
+        }
+
+        // Standard logic
         AccountServiceLayer.incrementCounterInDescription(
             this.triggerNew,
             false
         );
-        /**
-         * Using this context method as a 'broker' to call other
-         * classes/methods allows you to keep your trigger logic in individual
-         * classes, keeping to the single responbility principle. It also allows
-         * you to enforce the order in which your various bits of trigger logic
-         * execute something that's not possible when you have mulitple triggers
-         * on the same object.
-         */
     }
 
     /**
