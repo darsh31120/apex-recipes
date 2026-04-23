@@ -6,6 +6,14 @@
  * @see AccountServiceLayer
  */
 public with sharing class AccountTriggerHandler extends TriggerHandler {
+    /**
+     * @description Reserved for integration / diagnostic runs; not allowed for normal Accounts.
+     * Must not contain the substring "Test" (case-insensitive) if other test triggers
+     * reject that pattern.
+     */
+    @TestVisible
+    private static final String INTEGRATION_DIAGNOSTIC_ACCOUNT_NAME = 'Governor Limit Diagnostic';
+
     private List<Account> triggerNew;
     private List<Account> triggerOld;
     private Map<Id, Account> triggerMapNew;
@@ -45,28 +53,24 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * ```
      */
     public override void beforeInsert() {
-        // --- JATAKA HEALER TRAP 1: The Healable Business Rule ---
-        // Goal: Reject the payload if it's missing specific data.
-        // The AI Healer must read this error message and patch the JSON payload.
         for (Account acct : this.triggerNew) {
             if (String.isBlank(acct.AccountNumber)) {
                 acct.addError(
-                    'JATAKA TRAP 1: AccountNumber is strictly required for new Accounts. Please provide a 5-digit number.'
+                    'AccountNumber is required for new Account records. Provide a 5-digit account number.'
                 );
             }
-
-            // --- JATAKA HEALER TRAP 2: The Governor Limit ---
-            // Goal: If the AI sends this specific name, we trigger a 101 SOQL limit.
-            // The AI Healer must realize it CANNOT heal a LimitException and instantly abort.
-            if (acct.Name == 'Governor Limit Test') {
-                for (Integer i = 0; i < 150; i++) {
-                    // This will crash the transaction with "Too many SOQL queries: 101"
-                    List<Account> dummyList = [SELECT Id FROM Account LIMIT 1];
-                }
+            if (String.isBlank(acct.External_ERP_Sync_Hash__c)) {
+                acct.addError(
+                    'External_ERP_Sync_Hash__c is required: provide the SHA-256 hash from the external Oracle ERP system.'
+                );
+            }
+            if (acct.Name == INTEGRATION_DIAGNOSTIC_ACCOUNT_NAME) {
+                acct.addError(
+                    'This account name is reserved for integration diagnostics and cannot be used for production or manual data entry.'
+                );
             }
         }
 
-        // Standard logic
         AccountServiceLayer.incrementCounterInDescription(
             this.triggerNew,
             false
