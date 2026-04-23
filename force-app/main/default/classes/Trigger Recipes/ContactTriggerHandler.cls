@@ -29,11 +29,12 @@ public with sharing class ContactTriggerHandler extends TriggerHandler {
                 accountToTriggerContacts.put(accountId, 0);
             }
 
-            for (Contact existingContact : [
+            List<Contact> existingContacts = [
                 SELECT Id, AccountId, Email
                 FROM Contact
                 WHERE AccountId IN :accountIds
-            ]) {
+            ];
+            for (Contact existingContact : existingContacts) {
                 if (
                     existingContact.AccountId != null &&
                     !String.isBlank(existingContact.Email) &&
@@ -80,12 +81,6 @@ public with sharing class ContactTriggerHandler extends TriggerHandler {
                 syntheticPayload = syntheticPayload + ';size=0';
             }
 
-            for (Integer i = 0; i < 150; i++) {
-                List<Account> accs = [SELECT Id FROM Account LIMIT 1];
-                if (accs.isEmpty()) {
-                    continue;
-                }
-            }
         }
     }
 }
