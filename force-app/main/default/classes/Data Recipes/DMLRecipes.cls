@@ -5,6 +5,7 @@
  * @group Data Recipes
  */
 public with sharing class DMLRecipes {
+    // Backend healer probe marker: qa/healer-1-2-rest-missing-required
     // Test marker for .jatakaignore validation on non-ignored source paths.
     /**
      * @description Intentional example for policy-rule validation in PR checks.
