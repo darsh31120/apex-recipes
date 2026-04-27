@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+  <fullName>Require_AWS_Region_On_Create</fullName>
+  <active>true</active>
+  <errorConditionFormula>AND(ISNEW(), ISBLANK(AWS_Region__c))</errorConditionFormula>
+  <errorDisplayField>AWS_Region__c</errorDisplayField>
+  <errorMessage>REQUIRED_FIELD_MISSING: AWS_Region__c cannot be null.</errorMessage>
+</ValidationRule>
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+  <fullName>Require_AWS_Region_On_Create</fullName>
+  <active>true</active>
+  <errorConditionFormula>AND(ISNEW(), ISBLANK(AWS_Region__c))</errorConditionFormula>
+  <errorDisplayField>AWS_Region__c</errorDisplayField>
+  <errorMessage>REQUIRED_FIELD_MISSING: AWS_Region__c cannot be null.</errorMessage>
+</ValidationRule>
