@@ -334,6 +334,23 @@ public with sharing class CalloutRecipes extends RestClient {
         newAccount.ExternalSalesforceId__c = responseMap.get('Id').toString();
         newAccount.Name = responseMap.get('Name').toString();
         newAccount.Website = responseMap.get('Website').toString();
+        newAccount.AccountNumber = '12345';
+        newAccount.Jataka_Region__c = 'NA';
+        newAccount.External_ERP_Sync_Hash__c =
+            'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+        if (Account.SObjectType.getDescribe()
+            .fields.getMap()
+            .containsKey('jataka_healer_probe__c')) {
+            Schema.DescribeFieldResult fr = Account.SObjectType.getDescribe()
+                .fields.getMap()
+                .get('jataka_healer_probe__c')
+                .getDescribe();
+            if (fr.getType() == Schema.DisplayType.DOUBLE) {
+                newAccount.put('Jataka_Healer_Probe__c', 0);
+            } else {
+                newAccount.put('Jataka_Healer_Probe__c', '0');
+            }
+        }
         // Add the account to our List<SObject> for us to insert
         dataToInsert.add(newAccount);
         // We can now create a list of contact from our response body

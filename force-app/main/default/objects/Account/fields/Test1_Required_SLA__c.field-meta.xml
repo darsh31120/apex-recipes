@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+  <fullName>Test1_Required_SLA__c</fullName>
+  <description>Required Account field used for try_payload happy-path test setup.</description>
+  <label>Test1 Required SLA</label>
+  <length>50</length>
+  <required>true</required>
+  <trackFeedHistory>false</trackFeedHistory>
+  <type>Text</type>
+</CustomField>

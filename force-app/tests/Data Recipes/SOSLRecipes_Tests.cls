@@ -2,9 +2,18 @@
 private class SOSLRecipes_Tests {
     @TestSetup
     static void makeData() {
-        Account a1 = new Account(name = 'KS');
-        Account a2 = new Account(name = 'bob', shippingState = 'KS');
-        Account a3 = new Account(name = 'oz');
+        Account a1 = (Account) TestFactory.createSObject(
+            new Account(name = 'KS'),
+            false
+        );
+        Account a2 = (Account) TestFactory.createSObject(
+            new Account(name = 'bob', shippingState = 'KS'),
+            false
+        );
+        Account a3 = (Account) TestFactory.createSObject(
+            new Account(name = 'oz'),
+            false
+        );
 
         insert new List<Account>{ a1, a2, a3 };
 

@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Apex Recipes is a library of concise, meaningful examples of code for common use cases utilizing best practices. They reflect enterprise patterns that can be utilized
+Apex Recipes is a library of concise, meaningful examples of code for common use cases utilizing best practices. They reflect enterprise patterns that canaschvjha be utilized
 for real world solutions and should be relevant to developers of all skill levels. The code is intended to reflect clarity while trying to maintain brevity. See the Table of Contents for installation options. We recommend using the [Salesforce CLI](https://developer.salesforce.com/tools/sfdxcli) and a scratch org for your initial deployment.
 
 <div>
