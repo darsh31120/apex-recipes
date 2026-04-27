@@ -6,6 +6,14 @@
  * @see AccountServiceLayer
  */
 public with sharing class AccountTriggerHandler extends TriggerHandler {
+    /**
+     * @description Reserved for integration / diagnostic runs; not allowed for normal Accounts.
+     * Must not contain the substring "Test" (case-insensitive) if other test triggers
+     * reject that pattern.
+     */
+    @TestVisible
+    private static final String INTEGRATION_DIAGNOSTIC_ACCOUNT_NAME = 'Governor Limit Diagnostic';
+
     private List<Account> triggerNew;
     private List<Account> triggerOld;
     private Map<Id, Account> triggerMapNew;
@@ -45,21 +53,10 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * ```
      */
     public override void beforeInsert() {
-        // Note: You don't need to put your logic directly in this method.
-        // If, for instance, you have a service layer, you can call methods on
-        // those classes here, just like this:
         AccountServiceLayer.incrementCounterInDescription(
             this.triggerNew,
             false
         );
-        /**
-         * Using this context method as a 'broker' to call other
-         * classes/methods allows you to keep your trigger logic in individual
-         * classes, keeping to the single responbility principle. It also allows
-         * you to enforce the order in which your various bits of trigger logic
-         * execute something that's not possible when you have mulitple triggers
-         * on the same object.
-         */
     }
 
     /**

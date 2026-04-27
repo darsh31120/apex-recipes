@@ -27,7 +27,10 @@ private class Safely_Tests {
 
     @isTest
     static void testDoInsertMethodsNoThrowPositive() {
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         Test.startTest();
         List<Database.SaveResult> results = new Safely().doInsert(account);
         Test.stopTest();
@@ -46,7 +49,10 @@ private class Safely_Tests {
         System.runAs(minAccessUser) {
             System.Assert.isFalse(CanTheUser.create(new Account()));
             Test.startTest();
-            Account account = (Account) new Account(Name = 'TestAccount');
+            Account account = (Account) TestFactory.createSObject(
+                new Account(Name = 'TestAccount'),
+                false
+            );
             List<Database.SaveResult> results = new Safely().doInsert(account);
             Test.stopTest();
             System.Assert.areEqual(
@@ -61,9 +67,9 @@ private class Safely_Tests {
     static void testMarketingProfileGeneratesInsertExceptionPositive() {
         User marketingUser = TestFactory.createMarketingUser(true);
         Boolean didCatchTheRightException = false;
-        Account account = (Account) new Account(
-            Name = 'TestAccount',
-            TradeStyle = 'invalid'
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount', TradeStyle = 'invalid'),
+            false
         );
         Test.startTest();
         System.runAs(marketingUser) {
@@ -87,7 +93,10 @@ private class Safely_Tests {
 
     @isTest
     static void testDoUpdateMethodsNoThrowPositive() {
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         insert account;
         account.Name = 'TestAccount2';
         Test.startTest();
@@ -124,7 +133,10 @@ private class Safely_Tests {
             AssigneeId = minAccessUser.Id
         );
         System.runAs(minAccessUser) {
-            Account account = (Account) new Account(name = 'TestAccount');
+            Account account = (Account) TestFactory.createSObject(
+                new Account(Name = 'TestAccount'),
+                false
+            );
             System.Assert.isTrue(CanTheUser.create(account));
             TriggerHandler.bypass('AccountTriggerHandler');
             insert account;
@@ -166,7 +178,10 @@ private class Safely_Tests {
     static void testMarketingProfileGeneratesUpdateExceptionPositive() {
         User marketingUser = TestFactory.createMarketingUser(true);
         Boolean didCatchTheRightException = false;
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         insert account;
         account.TradeStyle = 'off limits field';
         Test.startTest();
@@ -191,10 +206,16 @@ private class Safely_Tests {
 
     @isTest
     static void testDoUpsertMethodsNoThrowPositive() {
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         insert account;
         account.Name = 'TestAccount2';
-        Account account2 = (Account) new Account(Name = 'TestAccount');
+        Account account2 = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         List<Account> accounts = new List<Account>{ account, account2 };
         Test.startTest();
         List<Database.upsertResult> insertResults = new Safely()
@@ -219,8 +240,8 @@ private class Safely_Tests {
                 updated++;
             }
         }
-        System.assert.areEqual(1, updated, 'Expected one to have been updated');
-        System.assert.areEqual(
+        System.Assert.areEqual(1, updated, 'Expected one to have been updated');
+        System.Assert.areEqual(
             1,
             inserted,
             'Expected one to have been inserted'
@@ -251,8 +272,14 @@ private class Safely_Tests {
         );
 
         System.runAs(minAccessUser) {
-            Account account = (Account) new Account(Name = 'TestAccount01');
-            Account account2 = (Account) new Account(Name = 'TestAccount02');
+            Account account = (Account) TestFactory.createSObject(
+                new Account(Name = 'TestAccount01'),
+                false
+            );
+            Account account2 = (Account) TestFactory.createSObject(
+                new Account(Name = 'TestAccount02'),
+                false
+            );
 
             Test.startTest();
             TriggerHandler.bypass('AccountTriggerHandler');
@@ -281,7 +308,10 @@ private class Safely_Tests {
     static void testMarketingProfileGeneratesUpsertExceptionPositive() {
         User marketingUser = TestFactory.createMarketingUser(true);
         Boolean didCatchTheRightException = false;
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         insert account;
         account.TradeStyle = 'off limits field';
         Test.startTest();
@@ -306,7 +336,10 @@ private class Safely_Tests {
 
     @isTest
     static void testDeleteWithRegularProfilePositive() {
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         insert account;
         Test.startTest();
         List<Database.deleteResult> results = new Safely()
@@ -322,7 +355,10 @@ private class Safely_Tests {
     @isTest
     static void testDeleteWithRegularProfileNegative() {
         User minAccessUser = TestFactory.createMinAccessUser(true);
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         insert account;
         Test.startTest();
         List<Database.deleteResult> results;
@@ -336,7 +372,10 @@ private class Safely_Tests {
 
     @isTest
     static void testDoQueryPositive() {
-        Account account = (Account) new Account(Name = 'TestAccount');
+        Account account = (Account) TestFactory.createSObject(
+            new Account(Name = 'TestAccount'),
+            false
+        );
         insert account;
         Test.startTest();
         List<Account> accounts = (List<Account>) new Safely()
@@ -345,7 +384,7 @@ private class Safely_Tests {
         Test.stopTest();
         System.Assert.areEqual(
             1,
-            Accounts.size(),
+            accounts.size(),
             'expected to find one record'
         );
     }
@@ -372,7 +411,10 @@ private class Safely_Tests {
         );
 
         System.runAs(new User(Id = UserInfo.getUserId())) {
-            Account account = (Account) new Account(Name = 'TestAccount');
+            Account account = (Account) TestFactory.createSObject(
+                new Account(Name = 'TestAccount'),
+                false
+            );
             insert account;
         }
         System.runAs(minAccessUser) {
