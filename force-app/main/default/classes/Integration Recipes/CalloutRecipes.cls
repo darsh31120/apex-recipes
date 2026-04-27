@@ -335,7 +335,6 @@ public with sharing class CalloutRecipes extends RestClient {
         newAccount.Name = responseMap.get('Name').toString();
         newAccount.Website = responseMap.get('Website').toString();
         newAccount.AccountNumber = '12345';
-        newAccount.Jataka_Region__c = 'NA';
         newAccount.External_ERP_Sync_Hash__c =
             'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
         if (Account.SObjectType.getDescribe()

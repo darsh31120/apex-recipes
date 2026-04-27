@@ -8,7 +8,6 @@ public class TestFactoryDefaults {
         public Map<Schema.SObjectField, Object> getFieldDefaults() {
             Map<Schema.SObjectField, Object> defaults = new Map<Schema.SObjectField, Object>{
                 Account.AccountNumber => '12345',
-                Account.Jataka_Region__c => 'NA',
                 Account.External_ERP_Sync_Hash__c =>
                 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
             };
