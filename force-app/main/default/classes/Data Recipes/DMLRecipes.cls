@@ -5,6 +5,7 @@
  * @group Data Recipes
  */
 public with sharing class DMLRecipes {
+    // Backend healer probe marker: qa/healer-3-1-max-retries
     // Test marker for .jatakaignore validation on non-ignored source paths.
     /**
      * @description Intentional example for policy-rule validation in PR checks.
