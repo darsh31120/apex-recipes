@@ -53,24 +53,6 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
      * ```
      */
     public override void beforeInsert() {
-        for (Account acct : this.triggerNew) {
-            if (String.isBlank(acct.AccountNumber)) {
-                acct.addError(
-                    'AccountNumber is required for new Account records. Provide a 5-digit account number.'
-                );
-            }
-            if (String.isBlank(acct.External_ERP_Sync_Hash__c)) {
-                acct.addError(
-                    'External_ERP_Sync_Hash__c is required: provide the SHA-256 hash from the external Oracle ERP system.'
-                );
-            }
-            if (acct.Name == INTEGRATION_DIAGNOSTIC_ACCOUNT_NAME) {
-                acct.addError(
-                    'This account name is reserved for integration diagnostics and cannot be used for production or manual data entry.'
-                );
-            }
-        }
-
         AccountServiceLayer.incrementCounterInDescription(
             this.triggerNew,
             false
