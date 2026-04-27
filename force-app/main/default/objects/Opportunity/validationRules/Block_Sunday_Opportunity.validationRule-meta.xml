@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+  <fullName>Block_Sunday_Opportunity</fullName>
+  <active>true</active>
+  <errorConditionFormula>WEEKDAY(TODAY()) = 1</errorConditionFormula>
+  <errorMessage>FIELD_CUSTOM_VALIDATION_EXCEPTION: You cannot create an Opportunity on a Sunday.</errorMessage>
+</ValidationRule>
