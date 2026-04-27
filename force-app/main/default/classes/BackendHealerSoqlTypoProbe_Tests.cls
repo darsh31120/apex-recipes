@@ -1,4 +1,4 @@
-@isTest
+@isTest(isParallel=true)
 private class BackendHealerSoqlTypoProbe_Tests {
     @isTest
     static void testBrokenQueryContainsIntentionalTypos() {
