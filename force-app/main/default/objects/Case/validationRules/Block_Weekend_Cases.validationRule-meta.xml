@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+  <fullName>Block_Weekend_Cases</fullName>
+  <active>true</active>
+  <errorConditionFormula>WEEKDAY(DATEVALUE(CreatedDate)) = 1 || WEEKDAY(DATEVALUE(CreatedDate)) = 7</errorConditionFormula>
+  <errorDisplayField>Subject</errorDisplayField>
+  <errorMessage>Cases absolutely cannot be created on Weekends.</errorMessage>
+</ValidationRule>
