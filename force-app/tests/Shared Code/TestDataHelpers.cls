@@ -16,7 +16,7 @@ public class TestDataHelpers {
     public static List<Account> genXNumberOfAccounts(Integer numAccounts) {
         List<Account> toInsert = new List<Account>();
         for (Integer intx = 0; intx < numAccounts; intx++) {
-            toinsert.add(genAccountWithOptions(true, 'US'));
+            toInsert.add(genAccountWithOptions(true, 'US'));
         }
         return toInsert;
     }
@@ -30,11 +30,14 @@ public class TestDataHelpers {
         Boolean setCountry,
         String country
     ) {
-        Account acct = new Account(
-            Name = 'The Test Account of Awesomeness' +
-                Crypto.getRandomInteger(),
-            ShippingStreet = '123 Sessame St.',
-            ShippingCity = 'Wehawkin'
+        Account acct = (Account) TestFactory.createSObject(
+            new Account(
+                Name = 'The Test Account of Awesomeness' +
+                    Crypto.getRandomInteger(),
+                ShippingStreet = '123 Sessame St.',
+                ShippingCity = 'Wehawkin'
+            ),
+            false
         );
 
         if (setCountry) {

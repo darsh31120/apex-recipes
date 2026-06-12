@@ -268,4 +268,39 @@ private inherited sharing class AccountTriggerHandler_Tests {
             );
         }
     }
+
+    @isTest
+    static void testBeforeInsertRejectsMissingAccountNumber() {
+        Account acct = (Account) TestFactory.createSObject(new Account(), false);
+        acct.AccountNumber = null;
+        try {
+            insert acct;
+            Assert.fail('Expected DmlException');
+        } catch (DmlException dmle) {
+            Assert.isTrue(
+                dmle.getMessage()
+                    .containsIgnoreCase('AccountNumber is required'),
+                'Expected AccountNumber validation: ' + dmle.getMessage()
+            );
+        }
+    }
+
+    @isTest
+    static void testBeforeInsertRejectsIntegrationDiagnosticName() {
+        try {
+            TestFactory.createSObject(
+                new Account(
+                    Name = AccountTriggerHandler.INTEGRATION_DIAGNOSTIC_ACCOUNT_NAME
+                ),
+                true
+            );
+            Assert.fail('Expected DmlException');
+        } catch (DmlException dmle) {
+            Assert.isTrue(
+                dmle.getMessage()
+                    .containsIgnoreCase('reserved for integration diagnostics'),
+                'Expected reserved name validation: ' + dmle.getMessage()
+            );
+        }
+    }
 }
