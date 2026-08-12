@@ -823,4 +823,81 @@ public class DMLRecipes_Tests {
         }
         Test.stopTest();
     }
+
+    // -------------------------------------------------------------------------
+    // Backend Healer Probe Tests
+    // These methods are intentionally SOQL-centric to exercise backend-only
+    // troubleshooting paths in Jataka/Kamikaze test generation and healing.
+    // -------------------------------------------------------------------------
+
+    @isTest
+    static void testBackendHealerProbe_InvalidFieldQueryFallsBackToValidQuery() {
+        Account acct = TestDataHelpers.genAccountWithOptions(true, 'BH-PROBE');
+        insert acct;
+
+        Test.startTest();
+        Boolean invalidFieldQueryFailedAsExpected = false;
+        try {
+            // Intentional invalid field reference for backend-healer probing.
+            Database.query('SELECT Id, NotARealField__c FROM Account LIMIT 1');
+        } catch (QueryException queryException) {
+            invalidFieldQueryFailedAsExpected = true;
+            System.Assert.isTrue(
+                queryException.getMessage().containsIgnoreCase('No such column'),
+                'Expected invalid field query failure for probe scenario'
+            );
+        }
+
+        List<Account> fallbackResult = Database.query(
+            'SELECT Id, Name FROM Account WHERE Name = \'BH-PROBE\' LIMIT 1'
+        );
+        Test.stopTest();
+
+        System.Assert.isTrue(
+            invalidFieldQueryFailedAsExpected,
+            'Probe should first fail on invalid field query'
+        );
+        System.Assert.areEqual(
+            1,
+            fallbackResult.size(),
+            'Fallback query should return the inserted account'
+        );
+    }
+
+    @isTest
+    static void testBackendHealerProbe_InvalidObjectQueryThenSchemaSafeRead() {
+        Account acct = TestDataHelpers.genAccountWithOptions(true, 'BH-SCHEMA');
+        insert acct;
+
+        Test.startTest();
+        Boolean invalidObjectQueryFailedAsExpected = false;
+        try {
+            // Intentional invalid object reference for backend-healer probing.
+            Database.query('SELECT Id FROM NotARealObject__c LIMIT 1');
+        } catch (QueryException queryException) {
+            invalidObjectQueryFailedAsExpected = true;
+            System.Assert.isTrue(
+                queryException.getMessage().containsIgnoreCase('sObject type'),
+                'Expected invalid object query failure for probe scenario'
+            );
+        }
+
+        List<Account> schemaSafeRead = [
+            SELECT Id, Name
+            FROM Account
+            WHERE Name = 'BH-SCHEMA'
+            LIMIT 1
+        ];
+        Test.stopTest();
+
+        System.Assert.isTrue(
+            invalidObjectQueryFailedAsExpected,
+            'Probe should fail on invalid object query before safe read'
+        );
+        System.Assert.areEqual(
+            1,
+            schemaSafeRead.size(),
+            'Schema-safe read should still succeed after probe failure'
+        );
+    }
 }
