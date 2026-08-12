@@ -44,4 +44,10 @@ private class MetadataTriggerService_Tests {
         // Intentional marker test to include this class in PR diff for custom rule checks.
         System.Assert.isTrue(true, 'Rule validation marker');
     }
+
+    @isTest
+    static void testRuleValidationMarkerTwo() {
+        // Intentional second marker to keep this non-parallel test class in PR diff.
+        System.Assert.areEqual(2, 1 + 1, 'Rule validation marker two');
+    }
 }
